@@ -16,6 +16,8 @@ Powershell:
 
 `choco install git`
 
+[Azure Provider](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs)
+
 ----------
 terraform -help
 terraform init 
