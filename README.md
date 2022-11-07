@@ -10,6 +10,8 @@ Powershell:
 
 `choco install terraform -y`
 
+`choco install terraform --force -y`
+
 `get-azcontext`
 
 `choco install git`
