@@ -20,17 +20,25 @@ Powershell:
 
 ----------
 terraform -help
+
 terraform init 
+
 terraform validate
+
 terraform plan
+
 terraform apply
+
 terraform workspace show
+
 terraform destroy
 
 terraform workspace show
+
 terraform workspace list
 
 terraform workspace new dev
+
 terraform workspace select dev
 
 https://registry.terraform.io/providers/hashicorp/azurerm/latest
@@ -38,4 +46,5 @@ https://registry.terraform.io/providers/hashicorp/azurerm/latest
 terraform init
 
 terraform plan
+
 terraform apply
