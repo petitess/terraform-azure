@@ -20,6 +20,20 @@ Powershell:
 
 [Hashicorp Terraform Plugin for VS Code](https://marketplace.visualstudio.com/items?itemName=HashiCorp.terraform)
 
+```t
+# Azure CLI Login
+az login
+
+# List Subscriptions
+az account list
+
+# Show chosen subscription
+az account show
+
+# Set Specific Subscription (if we have multiple subscriptions)
+az account set --subscription="SUBSCRIPTION_ID"
+```
+
 ----------
 terraform -help
 
