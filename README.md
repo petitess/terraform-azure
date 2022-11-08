@@ -43,8 +43,6 @@ terraform workspace new dev
 
 terraform workspace select dev
 
-https://registry.terraform.io/providers/hashicorp/azurerm/latest
-
 terraform init
 
 terraform plan
