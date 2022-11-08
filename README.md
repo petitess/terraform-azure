@@ -1,5 +1,5 @@
 # terraform-azure
-## Setup
+### Setup
 
 1. Install Azure CLI
 2. https://chocolatey.org/install
