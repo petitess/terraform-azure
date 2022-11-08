@@ -18,6 +18,8 @@ Powershell:
 
 [Azure Provider](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs)
 
+[Hashicorp Terraform Plugin for VS Code](https://marketplace.visualstudio.com/items?itemName=HashiCorp.terraform)
+
 ----------
 terraform -help
 
