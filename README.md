@@ -2,17 +2,13 @@
 ### Setup
 
 1. Install Azure CLI
-2. https://chocolatey.org/install
+2. [Download terraform](https://developer.hashicorp.com/terraform/downloads)
+3. Modify Environment Variables
 
 [Azure Provider](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs)
 
 [Hashicorp Terraform Plugin for VS Code](https://marketplace.visualstudio.com/items?itemName=HashiCorp.terraform)
 
-Powershell:
-
-```powershell
-Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-```
 ```powershell
 choco install terraform -y
 ```
