@@ -71,3 +71,8 @@ terraform workspace new dev
 ```
 terraform workspace select dev
 ```
+## Content
+
+| Name | Description | 
+|--|--|
+| vnet01 | Virtual Network with NSG
