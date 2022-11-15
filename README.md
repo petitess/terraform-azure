@@ -9,17 +9,6 @@
 
 [Hashicorp Terraform Plugin for VS Code](https://marketplace.visualstudio.com/items?itemName=HashiCorp.terraform)
 
-```powershell
-choco install terraform -y
-```
-```powershell
-choco install terraform --force -y
-```
-```powershell
-choco install git
-```
-
-
 #### Azure CLI Login
 ```
 az login
