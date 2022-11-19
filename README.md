@@ -65,6 +65,9 @@ icacls.exe terraform-azure.pem /reset
 ```
 icacls.exe terraform-azure.pem /grant:r "$($env:username):(r)"
 ```
+```
+icacls.exe terraform-azure.pem /inheritance:r
+```
 ## Content
 
 | Name | Description | 
