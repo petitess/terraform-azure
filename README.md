@@ -59,6 +59,12 @@ terraform workspace select dev
 ```
 ssh-keygen -m PEM -t rsa -b 4096 -C "azureuser@myserver" -f terraform-azure.pem 
 ```
+```
+icacls.exe terraform-azure.pem /reset
+```
+```
+icacls.exe terraform-azure.pem /grant:r "$($env:username):(r)"
+```
 ## Content
 
 | Name | Description | 
