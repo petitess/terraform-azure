@@ -9,23 +9,18 @@
 
 [Hashicorp Terraform Plugin for VS Code](https://marketplace.visualstudio.com/items?itemName=HashiCorp.terraform)
 
-#### Azure CLI Login
 ```
 az login
 ```
-#### List Subscriptions
 ```
 az account list
 ```
-#### Show chosen subscription
 ```
 az account show
 ```
-#### Set Specific Subscription (if we have multiple subscriptions)
 ```
 az account set --subscription="SUBSCRIPTION_ID"
 ```
-
 ----------
 ```
 terraform -help
@@ -59,6 +54,10 @@ terraform workspace new dev
 ```
 ```
 terraform workspace select dev
+```
+----------------
+```
+ssh-keygen -m PEM -t rsa -b 4096 -C "azureuser@myserver" -f terraform-azure.pem 
 ```
 ## Content
 
