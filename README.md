@@ -24,6 +24,12 @@ az account set --subscription="SUBSCRIPTION_ID"
 ```
 ----------
 ```
+terraform apply -auto-approve
+```
+<details><summary>$\textcolor{lightpink}{\text{More commands}}$</summary>
+<p>
+
+```
 terraform -help
 ```
 ```
@@ -56,6 +62,11 @@ terraform workspace new dev
 ```
 terraform workspace select dev
 ```
+
+</p>
+</details>
+
+
 ----------------
 ```
 ssh-keygen -m PEM -t rsa -b 4096 -C "azureuser@myserver" -f terraform-azure.pem 
