@@ -1,4 +1,4 @@
-# $\textcolor{darkviolet}{\text{terraform-azure}}$
+# $\textcolor{darkviolet}{\text{Terraform-azure}}$
 
 ### $\textcolor{darkviolet}{\text{Setup}}$
 
