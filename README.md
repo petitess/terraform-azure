@@ -1,5 +1,6 @@
-# terraform-azure
-### Setup
+# $\textcolor{darkviolet}{\text{terraform-azure}}$
+
+### $\textcolor{lightpink}{\text{Setup}}$
 
 1. Install Azure CLI
 2. [Download terraform](https://developer.hashicorp.com/terraform/downloads)
@@ -68,7 +69,7 @@ icacls.exe terraform-azure.pem /grant:r "$($env:username):(r)"
 ```
 icacls.exe terraform-azure.pem /inheritance:r
 ```
-## Content
+### $\textcolor{lightpink}{\text{Content}}$
 
 | Name | Description | 
 |--|--|
