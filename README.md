@@ -1,6 +1,6 @@
 # $\textcolor{darkviolet}{\text{terraform-azure}}$
 
-### $\textcolor{lightpink}{\text{Setup}}$
+### $\textcolor{darkviolet}{\text{Setup}}$
 
 1. Install Azure CLI
 2. [Download terraform](https://developer.hashicorp.com/terraform/downloads)
@@ -26,7 +26,7 @@ az account set --subscription="SUBSCRIPTION_ID"
 ```
 terraform apply -auto-approve
 ```
-<details><summary>$\textcolor{lightpink}{\text{More commands}}$</summary>
+<details><summary>$\textcolor{darkviolet}{\text{More commands}}$</summary>
 <p>
 
 ```
@@ -80,7 +80,7 @@ icacls.exe terraform-azure.pem /grant:r "$($env:username):(r)"
 ```
 icacls.exe terraform-azure.pem /inheritance:r
 ```
-### $\textcolor{lightpink}{\text{Content}}$
+### $\textcolor{darkviolet}{\text{Content}}$
 
 | Name | Description | 
 |--|--|
