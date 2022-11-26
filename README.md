@@ -1,6 +1,6 @@
-# Terraform-azure
-
-### Setup
+## Terraform-azure
+<details><summary>Setup</summary>
+<p>
 
 1. Install Azure CLI
 2. [Download terraform](https://developer.hashicorp.com/terraform/downloads)
@@ -9,6 +9,8 @@
 [Azure Provider](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs)
 
 [Hashicorp Terraform Plugin for VS Code](https://marketplace.visualstudio.com/items?itemName=HashiCorp.terraform)
+</p>
+</details>
 
 ```
 az login
