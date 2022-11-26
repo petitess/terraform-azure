@@ -90,5 +90,6 @@ icacls.exe terraform-azure.pem /inheritance:r
 
 | Name | Description | 
 |--|--|
-| vnet01 | Virtual Network with NSG
 | vm01 | A virtual machine with bastion
+| vnet01 | Virtual Network with NSG
+
