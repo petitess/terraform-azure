@@ -2,14 +2,16 @@
 <details><summary>Setup</summary>
 <p>
 
-1. Install Azure CLI
+1. Install [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-windows?tabs=azure-cli)
 2. [Download terraform](https://developer.hashicorp.com/terraform/downloads)
 3. Modify Environment Variables
+4. Install [Terraform Plugin for VS Code](https://marketplace.visualstudio.com/items?itemName=HashiCorp.terraform)
+5. Use [Azure Provider](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs)
+</p>
 
 [Azure Provider](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs)
 
-[Hashicorp Terraform Plugin for VS Code](https://marketplace.visualstudio.com/items?itemName=HashiCorp.terraform)
-</p>
+
 </details>
 
 ```
@@ -92,6 +94,7 @@ icacls.exe terraform-azure.pem /inheritance:r
 
 | Name | Description | 
 |--|--|
+| loadbalancer02 | External load balancer
 | vm01 | A virtual machine with bastion
 | vnet01 | Virtual Network with NSG
 
