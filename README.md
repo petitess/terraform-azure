@@ -9,9 +9,6 @@
 5. Use [Azure Provider](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs)
 </p>
 
-[Azure Provider](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs)
-
-
 </details>
 
 ```
