@@ -94,5 +94,6 @@ icacls.exe terraform-azure.pem /inheritance:r
 | loadbalancer01 | Internal load balancer
 | loadbalancer02 | External load balancer
 | vm01 | A virtual machine with bastion
+| vm02 | Deploy Multiple Virtual Machines
 | vnet01 | Virtual Network with NSG
 
