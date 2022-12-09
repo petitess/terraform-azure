@@ -91,9 +91,11 @@ icacls.exe terraform-azure.pem /inheritance:r
 
 | Name | Description | 
 |--|--|
+| appserviceplan02 | Google Tag Manager 
 | loadbalancer01 | Internal load balancer
 | loadbalancer02 | External load balancer
 | vm01 | A virtual machine with bastion
 | vm02 | Deploy Multiple Virtual Machines
+| vm03 | Virtual Machine Array 
 | vnet01 | Virtual Network with NSG
 
