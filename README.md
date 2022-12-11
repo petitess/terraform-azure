@@ -91,6 +91,7 @@ icacls.exe terraform-azure.pem /inheritance:r
 
 | Name | Description | 
 |--|--|
+| alert01 | Service Health Alerts
 | appserviceplan01 | Azure App Service Plan integrated with vnet
 | appserviceplan02 | Google Tag Manager 
 | keyvault01 | Create Secrets for VMs 
