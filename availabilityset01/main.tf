@@ -13,15 +13,6 @@ provider "azurerm" {
   features {}
 }
 
-data "azurerm_availability_set" "avail" {
-  for_each = var.availabilitysets
-  depends_on = [
-    azurerm_availability_set.avail
-  ]
-  name = "avail-${each.value.name}"
-  resource_group_name = "rg-${each.value.name}"
-}
-
 module "vmsnetcore" {
   for_each = var.vmsnetcore
   source = "./vmavail"
