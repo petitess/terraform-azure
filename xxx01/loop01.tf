@@ -11,3 +11,16 @@
     for v in local.buckets_and_folders : v
     if var.s3_create[1]
   ])
+
+    
+    
+variable "enable_thing" {
+  type = bool
+}
+
+resource "example" "example" {
+  for_each = {
+    for k, v in var.something : k => v
+    if var.enable_thing
+  }
+}
