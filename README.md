@@ -103,5 +103,6 @@ icacls.exe terraform-azure.pem /inheritance:r
 | vm01 | A virtual machine with bastion
 | vm02 | Deploy Multiple Virtual Machines
 | vm03 | Virtual Machine Array 
+| vmss01 | Virtual machine scale set with auto scaling 
 | vnet01 | Virtual Network with NSG
 
