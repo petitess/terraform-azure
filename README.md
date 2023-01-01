@@ -6,7 +6,7 @@
 2. Download [terraform](https://developer.hashicorp.com/terraform/downloads)
 3. Modify Environment Variables `rundll32 sysdm.cpl,EditEnvironmentVariables`
 4. Install [Terraform Plugin for VS Code](https://marketplace.visualstudio.com/items?itemName=HashiCorp.terraform)
-5. Use [Azure Provider](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs)
+5. Use [Azure Provider](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs), [AzureAD Provider](https://registry.terraform.io/providers/hashicorp/azuread/latest/docs), [Azapi Provider](https://registry.terraform.io/providers/Azure/azapi/latest/docs)
 </p>
 
 </details>
