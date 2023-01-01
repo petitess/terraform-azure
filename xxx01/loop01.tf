@@ -24,3 +24,5 @@ resource "example" "example" {
     if var.enable_thing
   }
 }
+
+for_each = { for host, values in var.hosts: host => values if values.volume }
