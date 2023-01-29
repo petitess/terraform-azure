@@ -107,5 +107,6 @@ icacls.exe terraform-azure.pem /inheritance:r
 | vm02 | Deploy Multiple Virtual Machines
 | vm03 | Virtual Machine Array 
 | vmss01 | Virtual machine scale set with auto scaling 
-| vnet01 | Virtual Network with NSG
+| vnet01 | Virtual Network with NSG 10.0.0.0/16
+| vnet02 | Virtual Network with NSG 10.10.0.0/16 (citrix)
 
