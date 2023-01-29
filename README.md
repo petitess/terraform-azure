@@ -102,6 +102,7 @@ icacls.exe terraform-azure.pem /inheritance:r
 | loadbalancer02 | External load balancer
 | privateendpoint01 | Storage Account: Blob, File, Queue, Table 
 | storageaccount01 | Containers, Fileshares, Queues, Tables 
+|  storageaccount02 | Fileshare with backup 
 | vm01 | A virtual machine with bastion
 | vm02 | Deploy Multiple Virtual Machines
 | vm03 | Virtual Machine Array 
