@@ -96,6 +96,7 @@ icacls.exe terraform-azure.pem /inheritance:r
 | appserviceplan02 | Google Tag Manager 
 | automationaccount01 | Scheduled Runbooks 
 | availabilityset01 | Multiple availability sets
+|  citrix01 | Citrix NetScaler(ADC) with high-availability(HA) 
 | dns01 | Public DNS zone - array 
 | keyvault01 | Create Secrets for VMs 
 | loadbalancer01 | Internal load balancer
