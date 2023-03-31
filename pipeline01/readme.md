@@ -56,3 +56,70 @@ pipelines:
            script:
              terraform apply -var-file=”prod.tfvars” -input=false -auto-approve
 ```   
+```yaml
+pipelines:
+  branches:
+    prod/*:
+      - step:
+          name: Security Scan
+          script:
+            # Run a security scan for sensitive data.
+            # See more security tools at https://bitbucket.org/product/features/pipelines/integrations?&category=security
+            - pipe: atlassian/git-secrets-scan:0.5.1
+      - step:
+          name: Terraform init
+          script:
+            - ./terraform init
+      - step:
+          name: Terraform validate
+          script:
+            - ./terraform workspace select prod || terraform workspace new prod
+            - ./terraform validate
+      - step:
+          name: Terraform format
+          script:
+            - ./terraform fmt -check -recursive
+      - step:
+          name: Terraform plan
+          oidc: true
+          script:
+            - ./terraform workspace select prod || terraform workspace new prod
+            - ./terraform plan -out plan.tfplan
+      - step:
+          # https://github.com/antonbabenko/terraform-cost-estimation
+          name: Terraform Cost Estimation
+          oidc: true
+          script:
+            - ./terraform workspace select prod || ./terraform workspace new prod
+            - ./terraform plan -out=plan.tfplan > /dev/null && ./terraform show -json plan.tfplan | curl -s -X POST -H "Content-Type:\ application/json" -d @- https://cost.modules.tf/
+      - step:
+          name: Deploy to Production
+          trigger: manual
+          deployment: Production
+          oidc: true
+          script:
+            - ./terraform workspace select prod || terraform workspace new prod
+            - ./terraform plan -out plan.tfplan
+            - ./terraform apply -input=false -auto-approve plan.tfplan
+```
+Because I am dealing with multiple Terraform State files, I have work like this:
+```yaml
+pipelines:
+  branches:
+    prod/*:
+      - step:
+    prod-network/*:
+      - step:
+            script:
+              - cd modules/network
+              - terraform init
+              - terraform plan
+              - terraform apply
+    prod-route53/*:
+      - step:
+            script:
+              - cd modules/route53
+              - terraform init
+              - terraform plan
+              - terraform apply
+``` 
