@@ -1,0 +1,24 @@
+pipelines:
+  default:
+    - step:
+        name: Deploying Terraform
+        runs-on: 
+          - 'self.hosted'
+          - 'windows'
+        script:
+          - $env:ARM_CLIENT_ID = 'xxxx-0671-4658-8ee9-xxxxx'
+          - $env:ARM_CLIENT_SECRET = 'xxxx~bxHp88BoyQMXtBTkKKRC2Uk-Xcsrjcxxx'
+          - $env:ARM_TENANT_ID = 'xxxxx-aa48-43c6-a39a-xxxx'
+          - $env:ARM_SUBSCRIPTION_ID = 'xxxxx-1a10-483e-95aa-xxxx'
+          #- terraform --version 
+          #- cd scripts/infrastructure
+          #- ls
+          - terraform init
+          - terraform validate
+          - terraform apply -auto-approve
+
+    - step:
+        name: 'Extra Deployment'
+        deployment: staging
+        script:
+          - echo "Your deployment..."
