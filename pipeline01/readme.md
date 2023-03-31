@@ -1,0 +1,18 @@
+```yaml
+image: hashicorp/terraform:full
+pipelines:
+    default:
+        - step:
+            script:
+                - terraform init
+                - terraform validate
+                - terraform plan
+    branches:
+        master:
+            - step:
+                script:
+                    - terraform init
+                    - terraform validate
+                    - terraform plan
+                    - terraform apply -input=false -auto-approve
+```
