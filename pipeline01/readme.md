@@ -162,3 +162,23 @@ pipelines:
             - terraform init && terraform plan -out terraform.tfplan
             - terraform apply terraform.tfplan
 ```
+```yaml
+image: hashicorp/terraform:full
+
+pipelines:
+  default:
+    - step:
+      script:
+        - terraform init
+        - terraform validate
+        - terraform plan
+  branches:
+    master:
+      - step:
+        trigger: manual
+        script:
+          - terraform init
+          - terraform validate
+          - terraform plan -out "planfile"
+          - terraform apply -input=false -auto-approve "planfile"
+```          
