@@ -12,7 +12,7 @@
 </details>
 
 ```
-az login
+az login --tenant ""
 ```
 ```
 az account list
