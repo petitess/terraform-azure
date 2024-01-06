@@ -95,6 +95,7 @@ icacls.exe terraform-azure.pem /inheritance:r
 | appserviceplan01 | Azure App Service Plan integrated with vnet
 | appserviceplan02 | Google Tag Manager 
 | automationaccount01 | Scheduled Runbooks 
+| automationaccount02 | Runbooks from files + link schedules
 | availabilityset01 | Multiple availability sets
 |  citrix01 | Citrix NetScaler(ADC) with high-availability(HA) 
 | dns01 | Public DNS zone - array 
