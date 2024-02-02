@@ -28,6 +28,6 @@ output "locals" {
   }
 }
 
-output "target-groups-arn-alternatice" {
+output "schedules" {
   value = { for k, v in var.schedules_daily : k => v }
 }
