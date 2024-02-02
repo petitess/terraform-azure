@@ -43,7 +43,7 @@ resource "azurerm_automation_schedule" "sch-daily" {
   resource_group_name     = azurerm_resource_group.aa.name
   timezone                = "Europe/Stockholm"
   frequency               = "Day"
-  start_time              = local.time >= (each.value.minute == "00" ? "55" : tonumber(each.value.minute) - 5) ? "${local.tomorrowdate}T${each.value.hour - 1}:${each.value.minute}:00Z" : "${local.todaydate}T${each.value.hour - 1}:${each.value.minute}:00Z"
+  start_time              = local.time >= "${each.value.hour -1}${(each.value.minute == "00" ? "55" : tonumber(each.value.minute) - 5)}" ? "${local.tomorrowdate}T${format("%02s", each.value.hour - 1)}:${each.value.minute}:00Z" : "${local.todaydate}T${format("%02s", each.value.hour - 1)}:${each.value.minute}:00Z"
 }
 
 resource "azurerm_automation_schedule" "sch-mon-fri" {
@@ -54,7 +54,7 @@ resource "azurerm_automation_schedule" "sch-mon-fri" {
   timezone                = "Europe/Stockholm"
   frequency               = "Week"
   week_days               = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-  start_time              = local.time >= (each.value.minute == "00" ? "55" : tonumber(each.value.minute) - 5) ? "${local.tomorrowdate}T${each.value.hour - 1}:${each.value.minute}:00Z" : "${local.todaydate}T${each.value.hour - 1}:${each.value.minute}:00Z"
+  start_time              = local.time >= "${each.value.hour -1}${(each.value.minute == "00" ? "55" : tonumber(each.value.minute) - 5)}" ? "${local.tomorrowdate}T${format("%02s", each.value.hour - 1)}:${each.value.minute}:00Z" : "${local.todaydate}T${format("%02s", each.value.hour - 1)}:${each.value.minute}:00Z"
 }
 
 resource "azurerm_automation_schedule" "sch-weekly" {
@@ -65,7 +65,7 @@ resource "azurerm_automation_schedule" "sch-weekly" {
   timezone                = "Europe/Stockholm"
   frequency               = "Week"
   week_days               = each.value.days
-  start_time              = local.time >= (each.value.minute == "00" ? "55" : tonumber(each.value.minute) - 5) ? "${local.tomorrowdate}T${each.value.hour - 1}:${each.value.minute}:00Z" : "${local.todaydate}T${each.value.hour - 1}:${each.value.minute}:00Z"
+  start_time              = local.time >= "${each.value.hour -1}${(each.value.minute == "00" ? "55" : tonumber(each.value.minute) - 5)}" ? "${local.tomorrowdate}T${format("%02s", each.value.hour - 1)}:${each.value.minute}:00Z" : "${local.todaydate}T${format("%02s", each.value.hour - 1)}:${each.value.minute}:00Z"
 }
 
 resource "azurerm_automation_job_schedule" "link" {
