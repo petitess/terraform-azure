@@ -4,23 +4,16 @@ locals {
   todaydate    = formatdate("YYYY-MM-DD", local.now)
   tomorrow     = timeadd(local.now, "24h")
   tomorrowdate = formatdate("YYYY-MM-DD", local.tomorrow)
+  summertime   = tonumber(formatdate("MM", local.now)) >= 04 && tonumber(formatdate("MM", local.now)) <= 10 ? 2 : 1
 }
 
-resource "azurerm_resource_group" "aa" {
-  name     = "rg-aa-${var.prefix}-01"
-  location = var.location
-  tags     = var.tags
+data "azurerm_resource_group" "aa" {
+  name = "rg-aa-prod-01"
 }
 
-resource "azurerm_automation_account" "aa" {
-  name                = "aa-${var.prefix}-01"
-  location            = var.location
-  tags                = var.tags
-  resource_group_name = azurerm_resource_group.aa.name
-  sku_name            = "Basic"
-  identity {
-    type = "SystemAssigned"
-  }
+data "azurerm_automation_account" "aa" {
+  name                = "aa-prod-01"
+  resource_group_name = data.azurerm_resource_group.aa.name
 }
 
 resource "azurerm_automation_runbook" "run" {
@@ -28,50 +21,50 @@ resource "azurerm_automation_runbook" "run" {
   name                    = replace(replace(data.local_file.run[each.key].filename, "runbooks/", ""), ".ps1", "")
   location                = var.location
   tags                    = var.tags
-  resource_group_name     = azurerm_resource_group.aa.name
-  automation_account_name = azurerm_automation_account.aa.name
-  log_progress            = "true"
-  log_verbose             = "true"
-  runbook_type            = "PowerShell"
+  resource_group_name     = data.azurerm_resource_group.aa.name
+  automation_account_name = data.azurerm_automation_account.aa.name
+  log_progress            = "false"
+  log_verbose             = "false"
+  runbook_type            = "PowerShell72"
   content                 = data.local_file.run[each.key].content
 }
 
 resource "azurerm_automation_schedule" "sch-daily" {
   for_each                = var.schedules_daily
   name                    = "sch-daily-${each.value.hour}-${each.value.minute}"
-  automation_account_name = azurerm_automation_account.aa.name
-  resource_group_name     = azurerm_resource_group.aa.name
+  automation_account_name = data.azurerm_automation_account.aa.name
+  resource_group_name     = data.azurerm_resource_group.aa.name
   timezone                = "Europe/Stockholm"
   frequency               = "Day"
-  start_time              = local.time >= "${each.value.hour -1}${(each.value.minute == "00" ? "55" : tonumber(each.value.minute) - 5)}" ? "${local.tomorrowdate}T${format("%02s", each.value.hour - 1)}:${each.value.minute}:00Z" : "${local.todaydate}T${format("%02s", each.value.hour - 1)}:${each.value.minute}:00Z"
+  start_time              = local.time >= "${each.value.hour - local.summertime}${(each.value.minute == "00" ? "55" : tonumber(each.value.minute) - 5)}" ? "${local.tomorrowdate}T${format("%02s", each.value.hour - local.summertime)}:${each.value.minute}:00Z" : "${local.todaydate}T${format("%02s", each.value.hour - local.summertime)}:${each.value.minute}:00Z"
 }
 
 resource "azurerm_automation_schedule" "sch-mon-fri" {
   for_each                = var.schedules_mon_fri
   name                    = "sch-mon-fri-${each.value.hour}-${each.value.minute}"
-  automation_account_name = azurerm_automation_account.aa.name
-  resource_group_name     = azurerm_resource_group.aa.name
+  automation_account_name = data.azurerm_automation_account.aa.name
+  resource_group_name     = data.azurerm_resource_group.aa.name
   timezone                = "Europe/Stockholm"
   frequency               = "Week"
   week_days               = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-  start_time              = local.time >= "${each.value.hour -1}${(each.value.minute == "00" ? "55" : tonumber(each.value.minute) - 5)}" ? "${local.tomorrowdate}T${format("%02s", each.value.hour - 1)}:${each.value.minute}:00Z" : "${local.todaydate}T${format("%02s", each.value.hour - 1)}:${each.value.minute}:00Z"
+  start_time              = local.time >= "${each.value.hour - local.summertime}${(each.value.minute == "00" ? "55" : tonumber(each.value.minute) - 5)}" ? "${local.tomorrowdate}T${format("%02s", each.value.hour - local.summertime)}:${each.value.minute}:00Z" : "${local.todaydate}T${format("%02s", each.value.hour - local.summertime)}:${each.value.minute}:00Z"
 }
 
 resource "azurerm_automation_schedule" "sch-weekly" {
   for_each                = var.schedules_weekly
   name                    = "sch-weekly-${each.value.hour}-${each.value.minute}"
-  automation_account_name = azurerm_automation_account.aa.name
-  resource_group_name     = azurerm_resource_group.aa.name
+  automation_account_name = data.azurerm_automation_account.aa.name
+  resource_group_name     = data.azurerm_resource_group.aa.name
   timezone                = "Europe/Stockholm"
   frequency               = "Week"
   week_days               = each.value.days
-  start_time              = local.time >= "${each.value.hour -1}${(each.value.minute == "00" ? "55" : tonumber(each.value.minute) - 5)}" ? "${local.tomorrowdate}T${format("%02s", each.value.hour - 1)}:${each.value.minute}:00Z" : "${local.todaydate}T${format("%02s", each.value.hour - 1)}:${each.value.minute}:00Z"
+  start_time              = local.time >= "${each.value.hour - local.summertime}${(each.value.minute == "00" ? "55" : tonumber(each.value.minute) - 5)}" ? "${local.tomorrowdate}T${format("%02s", each.value.hour - local.summertime)}:${each.value.minute}:00Z" : "${local.todaydate}T${format("%02s", each.value.hour - local.summertime)}:${each.value.minute}:00Z"
 }
 
 resource "azurerm_automation_job_schedule" "link" {
   for_each                = var.link_schedule_to_runbook
-  automation_account_name = azurerm_automation_account.aa.name
-  resource_group_name     = azurerm_resource_group.aa.name
+  automation_account_name = data.azurerm_automation_account.aa.name
+  resource_group_name     = data.azurerm_resource_group.aa.name
   runbook_name            = each.value.run
   schedule_name           = each.value.sch
   depends_on = [
@@ -80,14 +73,4 @@ resource "azurerm_automation_job_schedule" "link" {
     azurerm_automation_schedule.sch-weekly,
     azurerm_automation_runbook.run
   ]
-}
-
-output "locals" {
-  value = {
-    "now"          = local.now,
-    "todaydate"    = local.todaydate
-    "time"         = local.time,
-    "tomorrow"     = local.tomorrow
-    "tomorrowdate" = local.tomorrowdate
-  }
 }
