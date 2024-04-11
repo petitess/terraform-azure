@@ -1,0 +1,42 @@
+trigger: none
+
+parameters:
+  - name: environments
+    type: object
+    default:
+      - dev
+      - stg
+      # - prod
+
+pool:
+  vmImage: ubuntu-latest
+  name: vmdevopslinux01
+
+variables:
+  workingDirectory: runbooks
+
+stages:
+  - ${{ each environment in parameters.environments }}:
+      - stage: plan_${{ environment }}
+        displayName: Plan (${{ environment }})
+        jobs:
+          - job: plan_${{ environment }}
+            displayName: Plan ${{ environment }}
+            steps:
+              - task: AzureCLI@2
+                displayName: Set environment variables
+                inputs:
+                  azureSubscription: sp-infra-${{ environment }}-01
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  addSpnToEnvironment: true
+                  inlineScript: |
+                    echo "##vso[task.setvariable variable=ARM_USE_OIDC]true"
+                    echo "##vso[task.setvariable variable=ARM_TENANT_ID]$tenantId"
+                    echo "##vso[task.setvariable variable=ARM_CLIENT_ID]$servicePrincipalId"
+                    echo "##vso[task.setvariable variable=ARM_OIDC_TOKEN]$idToken"
+              - script: |
+                  terraform init -backend-config=storage_account_name=stinfraterraform${{ environment }}we01 -input=false
+                  terraform plan -var-file=var-${{ environment }}.tfvars -out=tfplan -input=false
+                displayName: "Init + Plan"
+                workingDirectory: ${{ variables.workingDirectory }}
