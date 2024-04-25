@@ -1,0 +1,39 @@
+{
+    "name": "PauseDW",
+    "properties": {
+        "annotations": [],
+        "runtimeState": "Started",
+        "pipelines": [
+            {
+                "pipelineReference": {
+                    "referenceName": "Resume_Pause SynapsePool",
+                    "type": "PipelineReference"
+                },
+                "parameters": {
+                    "subscriptionId": "3cf79b91-5671-45cc-9846-388592002887",
+                    "resourceGroup": "rg-sgds-analytics-dev-westeurope-01",
+                    "synapsePoolName": "syndp_sgs_ats_dev_weu_01",
+                    "synapseWorkspaceName": "synw-sgds-analytics-dev-westeurope-01",
+                    "operation": "Pause"
+                }
+            }
+        ],
+        "type": "ScheduleTrigger",
+        "typeProperties": {
+            "recurrence": {
+                "frequency": "Day",
+                "interval": 1,
+                "startTime": "2024-03-04T20:17:00",
+                "timeZone": "W. Europe Standard Time",
+                "schedule": {
+                    "minutes": [
+                        0
+                    ],
+                    "hours": [
+                        17
+                    ]
+                }
+            }
+        }
+    }
+}

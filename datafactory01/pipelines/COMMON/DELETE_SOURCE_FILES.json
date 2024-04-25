@@ -1,0 +1,106 @@
+{
+    "name": "DELETE_SOURCE_FILES",
+    "properties": {
+        "activities": [
+            {
+                "name": "SHOULD_DELETE",
+                "type": "IfCondition",
+                "dependsOn": [],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@pipeline().parameters.should_delete",
+                        "type": "Expression"
+                    },
+                    "ifFalseActivities": [
+                        {
+                            "name": "No files deleted from server",
+                            "type": "Wait",
+                            "dependsOn": [],
+                            "userProperties": [],
+                            "typeProperties": {
+                                "waitTimeInSeconds": 1
+                            }
+                        }
+                    ],
+                    "ifTrueActivities": [
+                        {
+                            "name": "Delete_copied_files_from_server",
+                            "type": "Delete",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "dataset": {
+                                    "referenceName": "FileServerCSV",
+                                    "type": "DatasetReference",
+                                    "parameters": {
+                                        "base_path": {
+                                            "value": "@pipeline().parameters.base_path",
+                                            "type": "Expression"
+                                        },
+                                        "remote_username": {
+                                            "value": "@pipeline().parameters.remote_username",
+                                            "type": "Expression"
+                                        },
+                                        "remote_password_secret_name": {
+                                            "value": "@pipeline().parameters.remote_password_keyvault_name",
+                                            "type": "Expression"
+                                        }
+                                    }
+                                },
+                                "logStorageSettings": {
+                                    "linkedServiceName": {
+                                        "referenceName": "AzureDataLakeStorage",
+                                        "type": "LinkedServiceReference"
+                                    },
+                                    "path": "logs/deleted_files"
+                                },
+                                "enableLogging": true,
+                                "storeSettings": {
+                                    "type": "FileServerReadSettings",
+                                    "recursive": false,
+                                    "wildcardFileName": {
+                                        "value": "@{pipeline().parameters.remote_file_prefix}",
+                                        "type": "Expression"
+                                    },
+                                    "enablePartitionDiscovery": false
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "parameters": {
+            "should_delete": {
+                "type": "bool",
+                "defaultValue": true
+            },
+            "base_path": {
+                "type": "string"
+            },
+            "remote_username": {
+                "type": "string"
+            },
+            "remote_password_keyvault_name": {
+                "type": "string"
+            },
+            "remote_file_prefix": {
+                "type": "string"
+            }
+        },
+        "folder": {
+            "name": "COMMON"
+        },
+        "annotations": [],
+        "lastPublishTime": "2023-11-28T15:33:27Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}

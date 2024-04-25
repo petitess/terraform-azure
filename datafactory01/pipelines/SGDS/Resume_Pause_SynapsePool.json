@@ -1,0 +1,287 @@
+{
+    "name": "Resume_Pause SynapsePool",
+    "properties": {
+        "activities": [
+            {
+                "name": "Prepare Check Status URL",
+                "type": "SetVariable",
+                "dependsOn": [],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "__varStatusURL",
+                    "value": {
+                        "value": "@concat('https://management.azure.com/subscriptions/'\n,pipeline().parameters.subscriptionId\n,'/resourceGroups/'\n,pipeline().parameters.resourceGroup\n,'/providers/Microsoft.Synapse/workspaces/'\n,pipeline().parameters.synapseWorkspaceName\n,'/sqlPools/'\n,pipeline().parameters.synapsePoolName\n,'/?api-version=2021-06-01')",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "Prepare Resume URL",
+                "type": "SetVariable",
+                "dependsOn": [],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "__varResumeURL",
+                    "value": {
+                        "value": "@concat('https://management.azure.com/subscriptions/'\n,pipeline().parameters.subscriptionId\n,'/resourceGroups/'\n,pipeline().parameters.resourceGroup\n,'/providers/Microsoft.Synapse/workspaces/'\n,pipeline().parameters.synapseWorkspaceName\n,'/sqlPools/'\n,pipeline().parameters.synapsePoolName\n,'/resume?api-version=2021-06-01')",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "Prepare Pause URL",
+                "type": "SetVariable",
+                "dependsOn": [],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "__varPauseURL",
+                    "value": {
+                        "value": "@concat('https://management.azure.com/subscriptions/'\n,pipeline().parameters.subscriptionId\n,'/resourceGroups/'\n,pipeline().parameters.resourceGroup\n,'/providers/Microsoft.Synapse/workspaces/'\n,pipeline().parameters.synapseWorkspaceName\n,'/sqlPools/'\n,pipeline().parameters.synapsePoolName\n,'/pause?api-version=2021-06-01')",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "Determine operation",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "Check Synapse DWH Status",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "__varOperationURL",
+                    "value": {
+                        "value": "@if(equals(pipeline().parameters.operation,'Pause'),variables('__varPauseURL')\n    ,if(equals(pipeline().parameters.operation,'Resume'),variables('__varResumeURL')\n,''))\n",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "Perform operation",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "Determine operation",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "POST",
+                    "url": {
+                        "value": "@variables('__varOperationURL')",
+                        "type": "Expression"
+                    },
+                    "authentication": {
+                        "type": "MSI",
+                        "resource": "https://management.azure.com/"
+                    }
+                }
+            },
+            {
+                "name": "Check if operation finished",
+                "type": "Until",
+                "dependsOn": [
+                    {
+                        "activity": "Perform operation",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@or(equals(variables('__varStatus'),'Paused')\n,equals(variables('__varStatus'),'Online'))",
+                        "type": "Expression"
+                    },
+                    "activities": [
+                        {
+                            "name": "Check Synapse Status",
+                            "type": "WebActivity",
+                            "dependsOn": [
+                                {
+                                    "activity": "Wait",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "method": "GET",
+                                "url": {
+                                    "value": "@variables('__varStatusURL')",
+                                    "type": "Expression"
+                                },
+                                "authentication": {
+                                    "type": "MSI",
+                                    "resource": "https://management.azure.com/"
+                                }
+                            }
+                        },
+                        {
+                            "name": "Wait",
+                            "type": "Wait",
+                            "dependsOn": [],
+                            "userProperties": [],
+                            "typeProperties": {
+                                "waitTimeInSeconds": 10
+                            }
+                        },
+                        {
+                            "name": "Set current status",
+                            "type": "SetVariable",
+                            "dependsOn": [
+                                {
+                                    "activity": "Check Synapse Status",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "variableName": "__varStatus",
+                                "value": {
+                                    "value": "@string(activity('Check Synapse Status').output.properties.status)",
+                                    "type": "Expression"
+                                }
+                            }
+                        }
+                    ],
+                    "timeout": "0.12:00:00"
+                }
+            },
+            {
+                "name": "Check Synapse DWH Status",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "Prepare Check Status URL",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    },
+                    {
+                        "activity": "Prepare Resume URL",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    },
+                    {
+                        "activity": "Prepare Pause URL",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "GET",
+                    "url": {
+                        "value": "@variables('__varStatusURL')",
+                        "type": "Expression"
+                    },
+                    "authentication": {
+                        "type": "MSI",
+                        "resource": "https://management.azure.com/"
+                    }
+                }
+            }
+        ],
+        "parameters": {
+            "subscriptionId": {
+                "type": "string",
+                "defaultValue": "3cf79b91-5671-45cc-9846-388592002887"
+            },
+            "resourceGroup": {
+                "type": "string",
+                "defaultValue": "rg-sgds-analytics-dev-westeurope-01"
+            },
+            "synapsePoolName": {
+                "type": "string",
+                "defaultValue": "syndp_sgs_ats_dev_weu_01"
+            },
+            "synapseWorkspaceName": {
+                "type": "string",
+                "defaultValue": "synw-sgds-analytics-dev-westeurope-01"
+            },
+            "operation": {
+                "type": "string",
+                "defaultValue": "Resume/Pause"
+            }
+        },
+        "variables": {
+            "__varStatusURL": {
+                "type": "String"
+            },
+            "__varResumeURL": {
+                "type": "String"
+            },
+            "__varPauseURL": {
+                "type": "String"
+            },
+            "__varOperationURL": {
+                "type": "String"
+            },
+            "__varStatus": {
+                "type": "String"
+            }
+        },
+        "folder": {
+            "name": "SGDS"
+        },
+        "annotations": [],
+        "lastPublishTime": "2024-03-04T15:49:49Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,433 @@
+{
+    "name": "INGEST_DB",
+    "properties": {
+        "description": "Generic pipeline for rest api calls with json as data format.\n",
+        "activities": [
+            {
+                "name": "LOG_START",
+                "type": "WebActivity",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "PUT",
+                    "headers": {
+                        "Authorization": {
+                            "value": "@concat('Bearer ', pipeline().parameters.access_token)",
+                            "type": "Expression"
+                        }
+                    },
+                    "url": {
+                        "value": "@concat(pipeline().globalParameters.ORCHESTRATION_BASE_URL, '/environments/', pipeline().parameters.payload.environment_id, '/job_execution/', pipeline().parameters.payload.job_execution_id, '/job_task/', pipeline().parameters.payload.job_execution_queue_id,'/start')",
+                        "type": "Expression"
+                    },
+                    "body": {
+                        "value": "{}",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "LOG_END",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "IF Hybrid",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "PUT",
+                    "headers": {
+                        "Authorization": {
+                            "value": "@concat('Bearer ', pipeline().parameters.access_token)",
+                            "type": "Expression"
+                        }
+                    },
+                    "url": {
+                        "value": "@concat(pipeline().globalParameters.ORCHESTRATION_BASE_URL, '/environments/', pipeline().parameters.payload.environment_id, '/job_execution/', pipeline().parameters.payload.job_execution_id, '/job_task/', pipeline().parameters.payload.job_execution_queue_id,'/end')",
+                        "type": "Expression"
+                    },
+                    "body": {
+                        "value": "{}",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "LOG_FAIL",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "IF Hybrid",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "PUT",
+                    "headers": {
+                        "Authorization": {
+                            "value": "@concat('Bearer ', pipeline().parameters.access_token)",
+                            "type": "Expression"
+                        }
+                    },
+                    "url": {
+                        "value": "@concat(pipeline().globalParameters.ORCHESTRATION_BASE_URL, '/environments/', pipeline().parameters.payload.environment_id, '/job_execution/', pipeline().parameters.payload.job_execution_id, '/job_task/', pipeline().parameters.payload.job_execution_queue_id,'/fail')",
+                        "type": "Expression"
+                    },
+                    "body": {
+                        "value": "{}",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "IF Hybrid",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "LOG_START",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@bool(pipeline().parameters.payload.payload.is_hybrid)",
+                        "type": "Expression"
+                    },
+                    "ifFalseActivities": [
+                        {
+                            "name": "UpdateWatermarkCloud",
+                            "type": "WebActivity",
+                            "dependsOn": [
+                                {
+                                    "activity": "INGEST_DB_API_CLOUD",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "7.00:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "method": "POST",
+                                "headers": {
+                                    "Ocp-Apim-Subscription-Key": {
+                                        "value": "@pipeline().parameters.payload.api_key",
+                                        "type": "Expression"
+                                    }
+                                },
+                                "url": "https://wade-saas-api-mgmt-dev.azure-api.net/orchestration/v1/resolve_metadata",
+                                "body": {
+                                    "value": "{\n    \"resolve_job_step\": \"UPDATE_DELTA_CONTROL\",\n    \"stored_procedure_parameters\": [\n        {\n            \"current_watermark\": \"@{activity('INGEST_DB_API_CLOUD').output.runOutput.new_watermark}\",\n            \"job_task_id\": \"@{pipeline().parameters.payload.job_task_id}\"\n        }\n    ]\n}",
+                                    "type": "Expression"
+                                }
+                            }
+                        },
+                        {
+                            "name": "INGEST_DB_API_CLOUD",
+                            "type": "DatabricksNotebook",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "7.00:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "notebookPath": "/Repos/customer-notebook/customer-notebook/ingest/ingest_db_api",
+                                "baseParameters": {
+                                    "is_delta_extract": {
+                                        "value": "@string(pipeline().parameters.payload.payload.source_entity[0].source_entity_delta.is_delta_extract)",
+                                        "type": "Expression"
+                                    },
+                                    "watermark_column": {
+                                        "value": "@string(pipeline().parameters.payload.payload.source_entity[0].source_entity_delta.watermark_column)",
+                                        "type": "Expression"
+                                    },
+                                    "db_schema": {
+                                        "value": "@pipeline().parameters.payload.payload.source_entity[0].ingest_db_source_entity.database_schema",
+                                        "type": "Expression"
+                                    },
+                                    "db_table": {
+                                        "value": "@pipeline().parameters.payload.payload.source_entity[0].ingest_db_source_entity.database_table",
+                                        "type": "Expression"
+                                    },
+                                    "db_server_name": {
+                                        "value": "@pipeline().parameters.payload.payload.data_source_db.db_server",
+                                        "type": "Expression"
+                                    },
+                                    "db_name": {
+                                        "value": "@pipeline().parameters.payload.payload.data_source_db.db_name",
+                                        "type": "Expression"
+                                    },
+                                    "db_portnumber": {
+                                        "value": "@string(pipeline().parameters.payload.payload.data_source_db.db_server_port)",
+                                        "type": "Expression"
+                                    },
+                                    "current_watermark": {
+                                        "value": "@pipeline().parameters.payload.payload.source_entity[0].source_entity_delta.current_watermark_value",
+                                        "type": "Expression"
+                                    },
+                                    "filesystem": {
+                                        "value": "@concat('diaccadlsfs', split(pipeline().DataFactory, '-')[3])",
+                                        "type": "Expression"
+                                    },
+                                    "landing_root": {
+                                        "value": "/landing",
+                                        "type": "Expression"
+                                    },
+                                    "source_system": {
+                                        "value": "@pipeline().parameters.payload.payload.data_source_name",
+                                        "type": "Expression"
+                                    },
+                                    "fs_root": {
+                                        "value": "@concat('abfss://', 'diaccadlsfs', split(pipeline().DataFactory, '-')[3], '@', 'wade', split(pipeline().DataFactory, '-')[1], 'dlst', split(pipeline().DataFactory, '-')[3],'.dfs.core.windows.net')",
+                                        "type": "Expression"
+                                    },
+                                    "endpoint": {
+                                        "value": "@pipeline().parameters.payload.job_task_name",
+                                        "type": "Expression"
+                                    },
+                                    "job_task_id": {
+                                        "value": "@string(pipeline().parameters.payload.job_task_id)",
+                                        "type": "Expression"
+                                    },
+                                    "connection_string": {
+                                        "value": "@pipeline().parameters.payload.payload.data_source_db.connection_string",
+                                        "type": "Expression"
+                                    },
+                                    "kv_secret_name_user": {
+                                        "value": "@pipeline().parameters.payload.payload.data_source_db.db_username_keyvault_secret_name",
+                                        "type": "Expression"
+                                    },
+                                    "kv_secret_name_password": {
+                                        "value": "@pipeline().parameters.payload.payload.data_source_db.db_password_keyvault_secret_name",
+                                        "type": "Expression"
+                                    },
+                                    "is_onprem": {
+                                        "value": "@string(pipeline().parameters.payload.payload.is_hybrid)",
+                                        "type": "Expression"
+                                    },
+                                    "exclude_columns": {
+                                        "value": "@pipeline().parameters.payload.payload.source_entity[0].ingest_db_source_entity.exclude_columns",
+                                        "type": "Expression"
+                                    }
+                                }
+                            },
+                            "linkedServiceName": {
+                                "referenceName": "Databricks",
+                                "type": "LinkedServiceReference"
+                            }
+                        }
+                    ],
+                    "ifTrueActivities": [
+                        {
+                            "name": "UpdateWatermarkOnPrem",
+                            "type": "WebActivity",
+                            "dependsOn": [
+                                {
+                                    "activity": "INGEST_DB_API_ONPREM",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "7.00:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "method": "POST",
+                                "headers": {
+                                    "Ocp-Apim-Subscription-Key": {
+                                        "value": "@pipeline().parameters.payload.api_key",
+                                        "type": "Expression"
+                                    }
+                                },
+                                "url": "https://wade-saas-api-mgmt-dev.azure-api.net/orchestration/v1/resolve_metadata",
+                                "body": {
+                                    "value": "{\n    \"resolve_job_step\": \"UPDATE_DELTA_CONTROL\",\n    \"stored_procedure_parameters\": [\n        {\n            \"current_watermark\": \"@{activity('INGEST_DB_API_ONPREM').output.runOutput.new_watermark}\",\n            \"job_task_id\": \"@{pipeline().parameters.payload.job_task_id}\"\n        }\n    ]\n}",
+                                    "type": "Expression"
+                                }
+                            }
+                        },
+                        {
+                            "name": "INGEST_DB_API_ONPREM",
+                            "type": "DatabricksNotebook",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "7.00:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "notebookPath": "/Repos/customer-notebook/customer-notebook/ingest/ingest_db_api",
+                                "baseParameters": {
+                                    "is_delta_extract": {
+                                        "value": "@string(pipeline().parameters.payload.payload.source_entity[0].source_entity_delta.is_delta_extract)",
+                                        "type": "Expression"
+                                    },
+                                    "watermark_column": {
+                                        "value": "@string(pipeline().parameters.payload.payload.source_entity[0].source_entity_delta.watermark_column)",
+                                        "type": "Expression"
+                                    },
+                                    "db_schema": {
+                                        "value": "@pipeline().parameters.payload.payload.source_entity[0].ingest_db_source_entity.database_schema",
+                                        "type": "Expression"
+                                    },
+                                    "db_table": {
+                                        "value": "@pipeline().parameters.payload.payload.source_entity[0].ingest_db_source_entity.database_table",
+                                        "type": "Expression"
+                                    },
+                                    "db_server_name": {
+                                        "value": "@pipeline().parameters.payload.payload.data_source_db.db_server",
+                                        "type": "Expression"
+                                    },
+                                    "db_name": {
+                                        "value": "@pipeline().parameters.payload.payload.data_source_db.db_name",
+                                        "type": "Expression"
+                                    },
+                                    "db_portnumber": {
+                                        "value": "@string(pipeline().parameters.payload.payload.data_source_db.db_server_port)",
+                                        "type": "Expression"
+                                    },
+                                    "current_watermark": {
+                                        "value": "@pipeline().parameters.payload.payload.source_entity[0].source_entity_delta.current_watermark_value",
+                                        "type": "Expression"
+                                    },
+                                    "filesystem": {
+                                        "value": "@concat('diaccadlsfs', split(pipeline().DataFactory, '-')[3])",
+                                        "type": "Expression"
+                                    },
+                                    "landing_root": {
+                                        "value": "/landing",
+                                        "type": "Expression"
+                                    },
+                                    "source_system": {
+                                        "value": "@pipeline().parameters.payload.payload.data_source_name",
+                                        "type": "Expression"
+                                    },
+                                    "fs_root": {
+                                        "value": "@concat('abfss://', 'diaccadlsfs', split(pipeline().DataFactory, '-')[3], '@', 'wade', split(pipeline().DataFactory, '-')[1], 'dlst', split(pipeline().DataFactory, '-')[3],'.dfs.core.windows.net')",
+                                        "type": "Expression"
+                                    },
+                                    "endpoint": {
+                                        "value": "@pipeline().parameters.payload.job_task_name",
+                                        "type": "Expression"
+                                    },
+                                    "job_task_id": {
+                                        "value": "@string(pipeline().parameters.payload.job_task_id)",
+                                        "type": "Expression"
+                                    },
+                                    "connection_string": {
+                                        "value": "@pipeline().parameters.payload.payload.data_source_db.connection_string",
+                                        "type": "Expression"
+                                    },
+                                    "kv_secret_name_user": {
+                                        "value": "@pipeline().parameters.payload.payload.data_source_db.db_username_keyvault_secret_name",
+                                        "type": "Expression"
+                                    },
+                                    "kv_secret_name_password": {
+                                        "value": "@pipeline().parameters.payload.payload.data_source_db.db_password_keyvault_secret_name",
+                                        "type": "Expression"
+                                    },
+                                    "is_onprem": {
+                                        "value": "@string(pipeline().parameters.payload.payload.is_hybrid)",
+                                        "type": "Expression"
+                                    },
+                                    "exclude_columns": {
+                                        "value": "@pipeline().parameters.payload.payload.source_entity[0].ingest_db_source_entity.exclude_columns",
+                                        "type": "Expression"
+                                    }
+                                }
+                            },
+                            "linkedServiceName": {
+                                "referenceName": "Databricks",
+                                "type": "LinkedServiceReference"
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "parameters": {
+            "access_token": {
+                "type": "string"
+            },
+            "payload": {
+                "type": "object"
+            },
+            "from_date": {
+                "type": "string"
+            },
+            "to_date": {
+                "type": "string"
+            }
+        },
+        "variables": {
+            "endpoint_request": {
+                "type": "String"
+            },
+            "file_name": {
+                "type": "String"
+            },
+            "start_time": {
+                "type": "String"
+            },
+            "api_response": {
+                "type": "Array"
+            }
+        },
+        "folder": {
+            "name": "ORCHESTRATION/JOB_STEP_EXECUTORS"
+        },
+        "annotations": [],
+        "lastPublishTime": "2023-11-28T15:24:15Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}
