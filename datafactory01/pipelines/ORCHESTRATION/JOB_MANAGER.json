@@ -1,0 +1,401 @@
+{
+    "name": "JOB_MANAGER",
+    "properties": {
+        "activities": [
+            {
+                "name": "ITERATE_BATCH",
+                "type": "ForEach",
+                "dependsOn": [],
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@pipeline().parameters.batch",
+                        "type": "Expression"
+                    },
+                    "isSequential": false,
+                    "batchCount": 20,
+                    "activities": [
+                        {
+                            "name": "CHECK_EXECUTION_TYPE",
+                            "type": "Switch",
+                            "dependsOn": [],
+                            "userProperties": [],
+                            "typeProperties": {
+                                "on": {
+                                    "value": "@item().payload.job_execution_type",
+                                    "type": "Expression"
+                                },
+                                "cases": [
+                                    {
+                                        "value": "ingest_rest",
+                                        "activities": [
+                                            {
+                                                "name": "Wait1",
+                                                "type": "Wait",
+                                                "dependsOn": [],
+                                                "userProperties": [],
+                                                "typeProperties": {
+                                                    "waitTimeInSeconds": 1
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "value": "ingest_db",
+                                        "activities": [
+                                            {
+                                                "name": "EXECUTE_LOAD_DB",
+                                                "type": "ExecutePipeline",
+                                                "dependsOn": [],
+                                                "policy": {
+                                                    "secureInput": false
+                                                },
+                                                "userProperties": [],
+                                                "typeProperties": {
+                                                    "pipeline": {
+                                                        "referenceName": "INGEST_DB",
+                                                        "type": "PipelineReference"
+                                                    },
+                                                    "waitOnCompletion": true,
+                                                    "parameters": {
+                                                        "access_token": {
+                                                            "value": "@pipeline().parameters.access_token",
+                                                            "type": "Expression"
+                                                        },
+                                                        "payload": {
+                                                            "value": "@item()",
+                                                            "type": "Expression"
+                                                        },
+                                                        "from_date": {
+                                                            "value": "@pipeline().parameters.from_date",
+                                                            "type": "Expression"
+                                                        },
+                                                        "to_date": {
+                                                            "value": "@pipeline().parameters.to_date",
+                                                            "type": "Expression"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "value": "ingest_remote_file_system",
+                                        "activities": [
+                                            {
+                                                "name": "EXECUTE_INGEST_REMOTE_FS",
+                                                "type": "ExecutePipeline",
+                                                "dependsOn": [],
+                                                "policy": {
+                                                    "secureInput": false
+                                                },
+                                                "userProperties": [],
+                                                "typeProperties": {
+                                                    "pipeline": {
+                                                        "referenceName": "INGEST_REMOTE_FS",
+                                                        "type": "PipelineReference"
+                                                    },
+                                                    "waitOnCompletion": true,
+                                                    "parameters": {
+                                                        "access_token": {
+                                                            "value": "@pipeline().parameters.access_token",
+                                                            "type": "Expression"
+                                                        },
+                                                        "payload": {
+                                                            "value": "@item()",
+                                                            "type": "Expression"
+                                                        },
+                                                        "from_date": {
+                                                            "value": "@pipeline().parameters.from_date",
+                                                            "type": "Expression"
+                                                        },
+                                                        "to_date": {
+                                                            "value": "@pipeline().parameters.to_date",
+                                                            "type": "Expression"
+                                                        },
+                                                        "should_delete": true
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "value": "transform",
+                                        "activities": [
+                                            {
+                                                "name": "EXECUTE_TRANSFORM",
+                                                "type": "ExecutePipeline",
+                                                "dependsOn": [],
+                                                "policy": {
+                                                    "secureInput": false
+                                                },
+                                                "userProperties": [],
+                                                "typeProperties": {
+                                                    "pipeline": {
+                                                        "referenceName": "BRONZE_TRANSFORM_AND_ENRICH",
+                                                        "type": "PipelineReference"
+                                                    },
+                                                    "waitOnCompletion": true,
+                                                    "parameters": {
+                                                        "access_token": {
+                                                            "value": "@pipeline().parameters.access_token",
+                                                            "type": "Expression"
+                                                        },
+                                                        "payload": {
+                                                            "value": "@item()",
+                                                            "type": "Expression"
+                                                        },
+                                                        "from_date": {
+                                                            "value": "@pipeline().parameters.from_date",
+                                                            "type": "Expression"
+                                                        },
+                                                        "to_date": {
+                                                            "value": "@pipeline().parameters.to_date",
+                                                            "type": "Expression"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "value": "copy_to_dw",
+                                        "activities": [
+                                            {
+                                                "name": "EXECUTE_LOAD_STAGE",
+                                                "type": "ExecutePipeline",
+                                                "dependsOn": [],
+                                                "policy": {
+                                                    "secureInput": false
+                                                },
+                                                "userProperties": [],
+                                                "typeProperties": {
+                                                    "pipeline": {
+                                                        "referenceName": "BRONZE_LOAD_STAGE",
+                                                        "type": "PipelineReference"
+                                                    },
+                                                    "waitOnCompletion": true,
+                                                    "parameters": {
+                                                        "access_token": {
+                                                            "value": "@pipeline().parameters.access_token",
+                                                            "type": "Expression"
+                                                        },
+                                                        "payload": {
+                                                            "value": "@item()",
+                                                            "type": "Expression"
+                                                        },
+                                                        "from_date": {
+                                                            "value": "@pipeline().parameters.from_date",
+                                                            "type": "Expression"
+                                                        },
+                                                        "to_date": {
+                                                            "value": "@pipeline().parameters.to_date",
+                                                            "type": "Expression"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "value": "raw_data_vault",
+                                        "activities": [
+                                            {
+                                                "name": "EXECUTE_SILVER_LOAD_RDV",
+                                                "type": "ExecutePipeline",
+                                                "dependsOn": [],
+                                                "policy": {
+                                                    "secureInput": false
+                                                },
+                                                "userProperties": [],
+                                                "typeProperties": {
+                                                    "pipeline": {
+                                                        "referenceName": "SILVER_LOAD_RDV",
+                                                        "type": "PipelineReference"
+                                                    },
+                                                    "waitOnCompletion": true,
+                                                    "parameters": {
+                                                        "access_token": {
+                                                            "value": "@pipeline().parameters.access_token",
+                                                            "type": "Expression"
+                                                        },
+                                                        "payload": {
+                                                            "value": "@item()",
+                                                            "type": "Expression"
+                                                        },
+                                                        "from_date": {
+                                                            "value": "@pipeline().parameters.from_date",
+                                                            "type": "Expression"
+                                                        },
+                                                        "to_date": {
+                                                            "value": "@pipeline().parameters.to_date",
+                                                            "type": "Expression"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "value": "data_mart",
+                                        "activities": [
+                                            {
+                                                "name": "EXECUTE_GOLD_LOAD_DM",
+                                                "type": "ExecutePipeline",
+                                                "dependsOn": [],
+                                                "policy": {
+                                                    "secureInput": false
+                                                },
+                                                "userProperties": [],
+                                                "typeProperties": {
+                                                    "pipeline": {
+                                                        "referenceName": "GOLD_LOAD_DM",
+                                                        "type": "PipelineReference"
+                                                    },
+                                                    "waitOnCompletion": true,
+                                                    "parameters": {
+                                                        "access_token": {
+                                                            "value": "@pipeline().parameters.access_token",
+                                                            "type": "Expression"
+                                                        },
+                                                        "payload": {
+                                                            "value": "@item()",
+                                                            "type": "Expression"
+                                                        },
+                                                        "from_date": {
+                                                            "value": "@pipeline().parameters.from_date",
+                                                            "type": "Expression"
+                                                        },
+                                                        "to_date": {
+                                                            "value": "@pipeline().parameters.to_date",
+                                                            "type": "Expression"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "value": "plugin_notebook",
+                                        "activities": [
+                                            {
+                                                "name": "EXECUTE_CUSTOM_PLUGIN_NOTEBOOK",
+                                                "type": "ExecutePipeline",
+                                                "dependsOn": [],
+                                                "policy": {
+                                                    "secureInput": false
+                                                },
+                                                "userProperties": [],
+                                                "typeProperties": {
+                                                    "pipeline": {
+                                                        "referenceName": "CUSTOM_PLUGIN_NOTEBOOK",
+                                                        "type": "PipelineReference"
+                                                    },
+                                                    "waitOnCompletion": true,
+                                                    "parameters": {
+                                                        "access_token": {
+                                                            "value": "@pipeline().parameters.access_token",
+                                                            "type": "Expression"
+                                                        },
+                                                        "payload": {
+                                                            "value": "@item()",
+                                                            "type": "Expression"
+                                                        },
+                                                        "from_date": {
+                                                            "value": "@pipeline().parameters.from_date",
+                                                            "type": "Expression"
+                                                        },
+                                                        "to_date": {
+                                                            "value": "@pipeline().parameters.to_date",
+                                                            "type": "Expression"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "value": "plugin_stored_procedure",
+                                        "activities": [
+                                            {
+                                                "name": "EXECUTE_CUSTOM_PLUGIN_STORED_PROC",
+                                                "type": "ExecutePipeline",
+                                                "dependsOn": [],
+                                                "policy": {
+                                                    "secureInput": false
+                                                },
+                                                "userProperties": [],
+                                                "typeProperties": {
+                                                    "pipeline": {
+                                                        "referenceName": "CUSTOM_PLUGIN_STORED_PROC",
+                                                        "type": "PipelineReference"
+                                                    },
+                                                    "waitOnCompletion": true,
+                                                    "parameters": {
+                                                        "access_token": {
+                                                            "value": "@pipeline().parameters.access_token",
+                                                            "type": "Expression"
+                                                        },
+                                                        "payload": {
+                                                            "value": "@item()",
+                                                            "type": "Expression"
+                                                        },
+                                                        "from_date": {
+                                                            "value": "@pipeline().parameters.from_date",
+                                                            "type": "Expression"
+                                                        },
+                                                        "to_date": {
+                                                            "value": "@pipeline().parameters.to_date",
+                                                            "type": "Expression"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "defaultActivities": [
+                                    {
+                                        "name": "Wait5",
+                                        "type": "Wait",
+                                        "dependsOn": [],
+                                        "userProperties": [],
+                                        "typeProperties": {
+                                            "waitTimeInSeconds": 1
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "parameters": {
+            "execution_id": {
+                "type": "string"
+            },
+            "access_token": {
+                "type": "string"
+            },
+            "environment_id": {
+                "type": "string"
+            },
+            "from_date": {
+                "type": "string"
+            },
+            "to_date": {
+                "type": "string"
+            },
+            "batch": {
+                "type": "array"
+            }
+        },
+        "folder": {
+            "name": "ORCHESTRATION/JOB_MANAGEMENT"
+        },
+        "annotations": [],
+        "lastPublishTime": "2023-12-07T13:57:34Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}

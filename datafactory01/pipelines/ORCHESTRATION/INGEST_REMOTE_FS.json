@@ -1,0 +1,359 @@
+{
+    "name": "INGEST_REMOTE_FS",
+    "properties": {
+        "description": "Generic pipeline for rest api calls with json as data format.\n",
+        "activities": [
+            {
+                "name": "LOG_START",
+                "type": "WebActivity",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "PUT",
+                    "headers": {
+                        "Authorization": {
+                            "value": "@concat('Bearer ', pipeline().parameters.access_token)",
+                            "type": "Expression"
+                        }
+                    },
+                    "url": {
+                        "value": "@concat(pipeline().globalParameters.ORCHESTRATION_BASE_URL, '/environments/', pipeline().parameters.payload.environment_id, '/job_execution/', pipeline().parameters.payload.job_execution_id, '/job_task/', pipeline().parameters.payload.job_execution_queue_id,'/start')",
+                        "type": "Expression"
+                    },
+                    "body": {
+                        "value": "{}",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "LOG_END",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "IF Hybrid",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "PUT",
+                    "headers": {
+                        "Authorization": {
+                            "value": "@concat('Bearer ', pipeline().parameters.access_token)",
+                            "type": "Expression"
+                        }
+                    },
+                    "url": {
+                        "value": "@concat(pipeline().globalParameters.ORCHESTRATION_BASE_URL, '/environments/', pipeline().parameters.payload.environment_id, '/job_execution/', pipeline().parameters.payload.job_execution_id, '/job_task/', pipeline().parameters.payload.job_execution_queue_id,'/end')",
+                        "type": "Expression"
+                    },
+                    "body": {
+                        "value": "{}",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "LOG_FAIL",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "IF Hybrid",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "PUT",
+                    "headers": {
+                        "Authorization": {
+                            "value": "@concat('Bearer ', pipeline().parameters.access_token)",
+                            "type": "Expression"
+                        }
+                    },
+                    "url": {
+                        "value": "@concat(pipeline().globalParameters.ORCHESTRATION_BASE_URL, '/environments/', pipeline().parameters.payload.environment_id, '/job_execution/', pipeline().parameters.payload.job_execution_id, '/job_task/', pipeline().parameters.payload.job_execution_queue_id,'/fail')",
+                        "type": "Expression"
+                    },
+                    "body": {
+                        "value": "{}",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "IF Hybrid",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "GET_RFS_USERNAME",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@bool(pipeline().parameters.payload.payload.is_hybrid)",
+                        "type": "Expression"
+                    },
+                    "ifFalseActivities": [
+                        {
+                            "name": "COPY_TO_ADLS",
+                            "type": "Copy",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "source": {
+                                    "type": "DelimitedTextSource",
+                                    "storeSettings": {
+                                        "type": "FileServerReadSettings",
+                                        "recursive": false,
+                                        "wildcardFolderPath": {
+                                            "value": "@pipeline().parameters.payload.payload.source_entity[0].ingest_remote_file_system_source_entity.remote_base_path",
+                                            "type": "Expression"
+                                        },
+                                        "wildcardFileName": {
+                                            "value": "@pipeline().parameters.payload.payload.source_entity[0].ingest_remote_file_system_source_entity.remote_file_prefix",
+                                            "type": "Expression"
+                                        },
+                                        "enablePartitionDiscovery": false
+                                    },
+                                    "formatSettings": {
+                                        "type": "DelimitedTextReadSettings"
+                                    }
+                                },
+                                "sink": {
+                                    "type": "DelimitedTextSink",
+                                    "storeSettings": {
+                                        "type": "AzureBlobFSWriteSettings"
+                                    },
+                                    "formatSettings": {
+                                        "type": "DelimitedTextWriteSettings",
+                                        "quoteAllText": true,
+                                        "fileExtension": ".txt"
+                                    }
+                                },
+                                "enableStaging": false,
+                                "translator": {
+                                    "type": "TabularTranslator",
+                                    "typeConversion": true,
+                                    "typeConversionSettings": {
+                                        "allowDataTruncation": true,
+                                        "treatBooleanAsNumber": false
+                                    }
+                                }
+                            },
+                            "inputs": [
+                                {
+                                    "referenceName": "FileServerCSV",
+                                    "type": "DatasetReference",
+                                    "parameters": {
+                                        "base_path": {
+                                            "value": "@pipeline().parameters.payload.payload.source_entity[0].ingest_remote_file_system_source_entity.remote_base_path",
+                                            "type": "Expression"
+                                        },
+                                        "remote_username": {
+                                            "value": "@activity('GET_RFS_USERNAME').output.pipelineReturnValue.secret_value",
+                                            "type": "Expression"
+                                        },
+                                        "remote_password_secret_name": {
+                                            "value": "@pipeline().parameters.payload.payload.data_source_remote_file_system.kv_password",
+                                            "type": "Expression"
+                                        }
+                                    }
+                                }
+                            ],
+                            "outputs": [
+                                {
+                                    "referenceName": "DataLakeCSV",
+                                    "type": "DatasetReference",
+                                    "parameters": {
+                                        "filesystem": {
+                                            "value": "@concat('diaccadlsfs', split(pipeline().DataFactory, '-')[3])",
+                                            "type": "Expression"
+                                        },
+                                        "landing_root": {
+                                            "value": "/landing",
+                                            "type": "Expression"
+                                        },
+                                        "source_system": {
+                                            "value": "@pipeline().parameters.payload.payload.data_source_name",
+                                            "type": "Expression"
+                                        },
+                                        "endpoint": {
+                                            "value": "@pipeline().parameters.payload.job_task_name",
+                                            "type": "Expression"
+                                        },
+                                        "file_name": {
+                                            "value": "@concat(pipeline().parameters.payload.job_task_name, formatDateTime(utcnow(),'yyyyMMddHHmmssfffffffK'), '.', toLower(pipeline().parameters.payload.payload.source_entity[0].data_format))\n\n\n",
+                                            "type": "Expression"
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Determine_if_source_files_should_be_deleted_copy1",
+                            "type": "ExecutePipeline",
+                            "dependsOn": [
+                                {
+                                    "activity": "COPY_TO_ADLS",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "pipeline": {
+                                    "referenceName": "DELETE_SOURCE_FILES",
+                                    "type": "PipelineReference"
+                                },
+                                "waitOnCompletion": true,
+                                "parameters": {
+                                    "should_delete": {
+                                        "value": "@pipeline().parameters.should_delete",
+                                        "type": "Expression"
+                                    },
+                                    "base_path": {
+                                        "value": "@pipeline().parameters.payload.payload.source_entity[0].ingest_remote_file_system_source_entity.remote_base_path",
+                                        "type": "Expression"
+                                    },
+                                    "remote_username": {
+                                        "value": "@activity('GET_RFS_USERNAME').output.pipelineReturnValue.secret_value",
+                                        "type": "Expression"
+                                    },
+                                    "remote_password_keyvault_name": {
+                                        "value": "@pipeline().parameters.payload.payload.data_source_remote_file_system.kv_password",
+                                        "type": "Expression"
+                                    },
+                                    "remote_file_prefix": {
+                                        "value": "@pipeline().parameters.payload.payload.source_entity[0].ingest_remote_file_system_source_entity.remote_file_prefix",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "ifTrueActivities": [
+                        {
+                            "name": "NotImplementedError_copy1",
+                            "type": "Fail",
+                            "dependsOn": [],
+                            "userProperties": [],
+                            "typeProperties": {
+                                "message": "Not implemented",
+                                "errorCode": "400"
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "GET_RFS_USERNAME",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "LOG_START",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "FETCH_AKV_SECRET",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "secret_name": {
+                            "value": "@pipeline().parameters.payload.payload.data_source_remote_file_system.kv_username",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            }
+        ],
+        "parameters": {
+            "access_token": {
+                "type": "string"
+            },
+            "payload": {
+                "type": "object"
+            },
+            "from_date": {
+                "type": "string"
+            },
+            "to_date": {
+                "type": "string"
+            },
+            "should_delete": {
+                "type": "bool",
+                "defaultValue": true
+            }
+        },
+        "variables": {
+            "endpoint_request": {
+                "type": "String"
+            },
+            "file_name": {
+                "type": "String"
+            },
+            "start_time": {
+                "type": "String"
+            },
+            "api_response": {
+                "type": "Array"
+            }
+        },
+        "folder": {
+            "name": "ORCHESTRATION/JOB_STEP_EXECUTORS"
+        },
+        "annotations": [],
+        "lastPublishTime": "2023-11-28T15:33:28Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}
