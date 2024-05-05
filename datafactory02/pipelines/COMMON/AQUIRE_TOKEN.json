@@ -1,0 +1,122 @@
+{
+    "name": "AQUIRE_TOKEN",
+    "properties": {
+        "activities": [
+            {
+                "name": "GET_USERNAME_AKV",
+                "type": "WebActivity",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": true,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "GET",
+                    "url": "https://wade-aaa-kv-dev.vault.azure.net/secrets/orchestration-username?api-version=7.0",
+                    "authentication": {
+                        "type": "MSI",
+                        "resource": "https://vault.azure.net"
+                    }
+                }
+            },
+            {
+                "name": "GET_PASSWORD_AKV",
+                "type": "WebActivity",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": true,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "GET",
+                    "url": "https://wade-aaa-kv-dev.vault.azure.net/secrets/orchestration-password?api-version=7.0",
+                    "authentication": {
+                        "type": "MSI",
+                        "resource": "https://vault.azure.net"
+                    }
+                }
+            },
+            {
+                "name": "AQUIRE_TOKEN",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "GET_USERNAME_AKV",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    },
+                    {
+                        "activity": "GET_PASSWORD_AKV",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": true
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "POST",
+                    "url": {
+                        "value": "@concat(pipeline().globalParameters.ORCHESTRATION_BASE_URL, '/login/system_user')",
+                        "type": "Expression"
+                    },
+                    "body": {
+                        "value": "{\n    \"username\": \"@{activity('GET_USERNAME_AKV').output.value}\",\n    \"password\": \"@{activity('GET_PASSWORD_AKV').output.value}\"\n}",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "RETURN",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "AQUIRE_TOKEN",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": true,
+                    "secureInput": true
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "pipelineReturnValue",
+                    "value": [
+                        {
+                            "key": "access_token",
+                            "value": {
+                                "type": "Expression",
+                                "content": "@activity('AQUIRE_TOKEN').output.access_token"
+                            }
+                        }
+                    ],
+                    "setSystemVariable": true
+                }
+            }
+        ],
+        "folder": {
+            "name": "COMMON"
+        },
+        "annotations": [],
+        "lastPublishTime": "2023-11-24T10:36:59Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}

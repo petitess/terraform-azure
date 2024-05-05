@@ -1,0 +1,42 @@
+{
+    "name": "DeltaLakeLatest",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "AzureDataLakeStorage",
+            "type": "LinkedServiceReference"
+        },
+        "parameters": {
+            "directory": {
+                "type": "String"
+            },
+            "file": {
+                "type": "String"
+            },
+            "file_system": {
+                "type": "String"
+            }
+        },
+        "annotations": [],
+        "type": "Parquet",
+        "typeProperties": {
+            "location": {
+                "type": "AzureBlobFSLocation",
+                "fileName": {
+                    "value": "@dataset().file",
+                    "type": "Expression"
+                },
+                "folderPath": {
+                    "value": "@dataset().directory",
+                    "type": "Expression"
+                },
+                "fileSystem": {
+                    "value": "@dataset().file_system",
+                    "type": "Expression"
+                }
+            },
+            "compressionCodec": "snappy"
+        },
+        "schema": []
+    },
+    "type": "Microsoft.DataFactory/factories/datasets"
+}

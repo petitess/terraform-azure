@@ -1,0 +1,299 @@
+{
+    "name": "BRONZE_TRANSFORM_AND_ENRICH",
+    "properties": {
+        "description": "Generic pipeline for that transform JSON to Parqut format.",
+        "activities": [
+            {
+                "name": "If onprem",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "LOG_START",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@bool(pipeline().parameters.payload.payload.is_hybrid)",
+                        "type": "Expression"
+                    },
+                    "ifFalseActivities": [
+                        {
+                            "name": "Transform Cloud",
+                            "type": "DatabricksNotebook",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "7.00:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "notebookPath": {
+                                    "value": "@pipeline().parameters.payload.payload.source_entity[0].transform_path",
+                                    "type": "Expression"
+                                },
+                                "baseParameters": {
+                                    "storage_account": {
+                                        "value": "@concat('wade', split(pipeline().DataFactory, '-')[1], 'dlst', split(pipeline().DataFactory, '-')[3])",
+                                        "type": "Expression"
+                                    },
+                                    "file_system": {
+                                        "value": "@concat('diaccadlsfs', split(pipeline().DataFactory, '-')[3])",
+                                        "type": "Expression"
+                                    },
+                                    "fs_root": {
+                                        "value": "@concat('abfss://', 'diaccadlsfs', split(pipeline().DataFactory, '-')[3], '@', 'wade', split(pipeline().DataFactory, '-')[1], 'dlst', split(pipeline().DataFactory, '-')[3],'.dfs.core.windows.net')",
+                                        "type": "Expression"
+                                    },
+                                    "refined_root": "/dw/delta",
+                                    "natural_keys": {
+                                        "value": "@pipeline().parameters.payload.payload.source_entity[0].natural_keys",
+                                        "type": "Expression"
+                                    },
+                                    "pipeline_run_id": {
+                                        "value": "@pipeline().RunId",
+                                        "type": "Expression"
+                                    },
+                                    "raw_root": "/dw/raw",
+                                    "landing_root": "/landing",
+                                    "end_point": {
+                                        "value": "@pipeline().parameters.payload.job_task_name",
+                                        "type": "Expression"
+                                    },
+                                    "source_system": {
+                                        "value": "@pipeline().parameters.payload.payload.data_source_name",
+                                        "type": "Expression"
+                                    },
+                                    "data_lake_from_date": {
+                                        "value": "@pipeline().parameters.from_date",
+                                        "type": "Expression"
+                                    },
+                                    "data_lake_to_date": {
+                                        "value": "@pipeline().parameters.to_date",
+                                        "type": "Expression"
+                                    },
+                                    "version_id": "v1_00",
+                                    "subject_area": "dummy",
+                                    "data_format": {
+                                        "value": "@pipeline().parameters.payload.payload.source_entity[0].data_format",
+                                        "type": "Expression"
+                                    },
+                                    "db_server_name": {
+                                        "value": "@pipeline().parameters.payload.payload.dw_server_name",
+                                        "type": "Expression"
+                                    },
+                                    "db_name": {
+                                        "value": "@pipeline().parameters.payload.payload.dw_name",
+                                        "type": "Expression"
+                                    },
+                                    "is_transactional": {
+                                        "value": "@string(pipeline().parameters.payload.payload.source_entity[0].is_transactional)",
+                                        "type": "Expression"
+                                    },
+                                    "is_onprem": {
+                                        "value": "@string(pipeline().parameters.payload.payload.is_hybrid)",
+                                        "type": "Expression"
+                                    },
+                                    "additional_properties": {
+                                        "value": "@string(pipeline().parameters.payload.payload.additional_properties_transform)",
+                                        "type": "Expression"
+                                    }
+                                }
+                            },
+                            "linkedServiceName": {
+                                "referenceName": "Databricks",
+                                "type": "LinkedServiceReference"
+                            }
+                        }
+                    ],
+                    "ifTrueActivities": [
+                        {
+                            "name": "Transform On-prem",
+                            "type": "DatabricksNotebook",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "7.00:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "notebookPath": {
+                                    "value": "/Shared/customer-notebook/transform/Transform2Parquet",
+                                    "type": "Expression"
+                                },
+                                "baseParameters": {
+                                    "storage_account": "test",
+                                    "file_system": "test",
+                                    "fs_root": "test",
+                                    "refined_root": "test",
+                                    "natural_keys": "test",
+                                    "pipeline_run_id": {
+                                        "value": "@pipeline().RunId",
+                                        "type": "Expression"
+                                    },
+                                    "raw_root": "test",
+                                    "landing_root": "test",
+                                    "end_point": "test",
+                                    "source_system": "test",
+                                    "data_lake_from_date": {
+                                        "value": "@pipeline().parameters.from_date",
+                                        "type": "Expression"
+                                    },
+                                    "data_lake_to_date": {
+                                        "value": "@pipeline().parameters.to_date",
+                                        "type": "Expression"
+                                    },
+                                    "version_id": "test",
+                                    "subject_area": "test",
+                                    "data_format": "test",
+                                    "db_server_name": "test",
+                                    "db_name": "test",
+                                    "is_transactional": "test",
+                                    "is_onprem": "test",
+                                    "additional_properties": "test"
+                                }
+                            },
+                            "linkedServiceName": {
+                                "referenceName": "Databricks",
+                                "type": "LinkedServiceReference"
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "LOG_START",
+                "type": "WebActivity",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "PUT",
+                    "headers": {
+                        "Authorization": {
+                            "value": "@concat('Bearer ', pipeline().parameters.access_token)",
+                            "type": "Expression"
+                        }
+                    },
+                    "url": {
+                        "value": "@concat(pipeline().globalParameters.ORCHESTRATION_BASE_URL, '/environments/', pipeline().parameters.payload.environment_id, '/job_execution/', pipeline().parameters.payload.job_execution_id, '/job_task/', pipeline().parameters.payload.job_execution_queue_id,'/start')",
+                        "type": "Expression"
+                    },
+                    "body": {
+                        "value": "{}",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "LOG_END",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "If onprem",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "PUT",
+                    "headers": {
+                        "Authorization": {
+                            "value": "@concat('Bearer ', pipeline().parameters.access_token)",
+                            "type": "Expression"
+                        }
+                    },
+                    "url": {
+                        "value": "@concat(pipeline().globalParameters.ORCHESTRATION_BASE_URL, '/environments/', pipeline().parameters.payload.environment_id, '/job_execution/', pipeline().parameters.payload.job_execution_id, '/job_task/', pipeline().parameters.payload.job_execution_queue_id,'/end')",
+                        "type": "Expression"
+                    },
+                    "body": {
+                        "value": "{}",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "LOG_FAIL",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "If onprem",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "PUT",
+                    "headers": {
+                        "Authorization": {
+                            "value": "@concat('Bearer ', pipeline().parameters.access_token)",
+                            "type": "Expression"
+                        }
+                    },
+                    "url": {
+                        "value": "@concat(pipeline().globalParameters.ORCHESTRATION_BASE_URL, '/environments/', pipeline().parameters.payload.environment_id, '/job_execution/', pipeline().parameters.payload.job_execution_id, '/job_task/', pipeline().parameters.payload.job_execution_queue_id,'/fail')",
+                        "type": "Expression"
+                    },
+                    "body": {
+                        "value": "{}",
+                        "type": "Expression"
+                    }
+                }
+            }
+        ],
+        "parameters": {
+            "access_token": {
+                "type": "string"
+            },
+            "payload": {
+                "type": "object"
+            },
+            "from_date": {
+                "type": "string"
+            },
+            "to_date": {
+                "type": "string"
+            }
+        },
+        "folder": {
+            "name": "ORCHESTRATION/JOB_STEP_EXECUTORS"
+        },
+        "annotations": [],
+        "lastPublishTime": "2023-11-28T15:19:17Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}

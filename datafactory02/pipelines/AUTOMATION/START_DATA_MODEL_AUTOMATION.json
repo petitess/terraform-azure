@@ -1,0 +1,378 @@
+{
+    "name": "START_DATA_MODEL_AUTOMATION",
+    "properties": {
+        "description": "Required to have uploaded files in WADE Portal prior to running this pipeline.",
+        "activities": [
+            {
+                "name": "AQUIRE_TOKEN",
+                "type": "ExecutePipeline",
+                "dependsOn": [],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "AQUIRE_TOKEN",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true
+                }
+            },
+            {
+                "name": "GENERATE_MODEL",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "AQUIRE_TOKEN",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    },
+                    {
+                        "activity": "GET_API_KEY",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "POST",
+                    "headers": {
+                        "Authorization": {
+                            "value": "@concat('Bearer ', activity('AQUIRE_TOKEN').output.pipelineReturnValue.access_token)",
+                            "type": "Expression"
+                        },
+                        "Ocp-Apim-Subscription-Key": {
+                            "value": "@activity('GET_API_KEY').output.pipelineReturnValue.secret_value",
+                            "type": "Expression"
+                        }
+                    },
+                    "url": {
+                        "value": "https://wade-saas-automation-feature-prod.azurewebsites.net/api/generate_@{pipeline().parameters.layer}?code=yo5Ep-6NGDlILBrw3p4KppkqNrU7J_Xz2Ik1CMsBqVuyAzFuWJOaXg==",
+                        "type": "Expression"
+                    },
+                    "body": {
+                        "value": "{\n    \"sas_token\": \"N/A\",\n    \"storage_account_url\": \"N/A\",\n    \"file_system\": \"N/A\",\n    \"adf_workspace_name\": \"@{pipeline().DataFactory}\",\n    \"type_of_generated_entity\": \"@{pipeline().parameters.layer}\",\n    \"custom_target_schema\": null, \n    \"database_to_generate_models_for\": \"@{pipeline().parameters.platform_target_type}\",\n    \"hashing_algorithm\": \"MD5\",\n    \"subject_area\": \"@{pipeline().parameters.subject_area}\",\n    \"tables_file_name\": \"tables.csv\",\n    \"table_mappings_file_name\": \"table_mappings.csv\",\n    \"column_mappings_file_name\": \"column_mappings.csv\",\n    \"should_upload_sql_to_storage\": false\n}",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "GET_API_KEY",
+                "type": "ExecutePipeline",
+                "dependsOn": [],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "FETCH_AKV_SECRET",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "secret_name": "wade-api-key"
+                    }
+                }
+            },
+            {
+                "name": "GENERATE_DQ_TESTS",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "GENERATE_MODEL",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "POST",
+                    "headers": {
+                        "Authorization": {
+                            "value": "@concat('Bearer ', activity('AQUIRE_TOKEN').output.pipelineReturnValue.access_token)",
+                            "type": "Expression"
+                        },
+                        "Ocp-Apim-Subscription-Key": {
+                            "value": "@activity('GET_API_KEY').output.pipelineReturnValue.secret_value",
+                            "type": "Expression"
+                        }
+                    },
+                    "url": {
+                        "value": "https://wade-saas-automation-feature-prod.azurewebsites.net/api/generate_dq_test_@{pipeline().parameters.layer}?code=yo5Ep-6NGDlILBrw3p4KppkqNrU7J_Xz2Ik1CMsBqVuyAzFuWJOaXg==",
+                        "type": "Expression"
+                    },
+                    "body": {
+                        "value": "{\n  \"sas_token\": \"N/A\",\n  \"storage_account_url\": \"N/A\",\n  \"file_system\": \"N/A\",\n  \"type_of_generated_entity\": \"@{pipeline().parameters.layer}\",\n  \"database_to_generate_models_for\": \"@{pipeline().parameters.platform_target_type}\",\n  \"subject_area\": \"@{pipeline().parameters.subject_area}\",\n  \"target_tables_to_exclude\": [],\n  \"result_schema\": null,\n  \"result_table\": null\n}",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "WRITE_MODEL_TO_FS",
+                "type": "DatabricksNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "GENERATE_MODEL",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "notebookPath": "/Shared/customer-notebook/common/write_to_storage",
+                    "baseParameters": {
+                        "file_path": {
+                            "value": "/dw/generated_sql/@{pipeline().parameters.subject_area}/@{pipeline().parameters.layer}/@{pipeline().parameters.platform_target_type}/",
+                            "type": "Expression"
+                        },
+                        "content": {
+                            "value": "@activity('GENERATE_MODEL').output.sql",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "Databricks",
+                    "type": "LinkedServiceReference"
+                }
+            },
+            {
+                "name": "WRITE_DQ_TESTS_TO_FS",
+                "type": "DatabricksNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "GENERATE_DQ_TESTS",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "notebookPath": "/Shared/customer-notebook/common/write_to_storage",
+                    "baseParameters": {
+                        "file_path": {
+                            "value": "/dw/generated_sql/@{pipeline().parameters.subject_area}/@{pipeline().parameters.layer}/@{pipeline().parameters.platform_target_type}/tests/",
+                            "type": "Expression"
+                        },
+                        "content": {
+                            "value": "@activity('GENERATE_DQ_TESTS').output.sql",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "Databricks",
+                    "type": "LinkedServiceReference"
+                }
+            },
+            {
+                "name": "SHOULD_INSTALL_MODEL",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "WRITE_MODEL_TO_FS",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    },
+                    {
+                        "activity": "WRITE_DQ_TESTS_TO_FS",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@bool(pipeline().parameters.execute_sql)",
+                        "type": "Expression"
+                    },
+                    "ifFalseActivities": [
+                        {
+                            "name": "NO_MODELS_INSTALLED",
+                            "type": "Wait",
+                            "dependsOn": [],
+                            "userProperties": [],
+                            "typeProperties": {
+                                "waitTimeInSeconds": 1
+                            }
+                        }
+                    ],
+                    "ifTrueActivities": [
+                        {
+                            "name": "GET_WAREHOUSE_DETAILS",
+                            "type": "WebActivity",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "method": "GET",
+                                "headers": {
+                                    "Authorization": {
+                                        "value": "@concat('Bearer ', activity('AQUIRE_TOKEN').output.pipelineReturnValue.access_token)",
+                                        "type": "Expression"
+                                    }
+                                },
+                                "url": {
+                                    "value": "@{pipeline().globalParameters.ORCHESTRATION_BASE_URL}/warehouse_details?subject_area=@{pipeline().parameters.subject_area}&is_on_prem=@{pipeline().parameters.is_onprem}",
+                                    "type": "Expression"
+                                }
+                            }
+                        },
+                        {
+                            "name": "EXECUTE_DATA_MODEL_SQL",
+                            "type": "DatabricksNotebook",
+                            "dependsOn": [
+                                {
+                                    "activity": "GET_WAREHOUSE_DETAILS",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "notebookPath": "/Shared/customer-notebook/transform/execute_sql_from_file_2_0",
+                                "baseParameters": {
+                                    "database": {
+                                        "value": "@activity('GET_WAREHOUSE_DETAILS').output.dw_name",
+                                        "type": "Expression"
+                                    },
+                                    "server": {
+                                        "value": "@activity('GET_WAREHOUSE_DETAILS').output.dw_server_name",
+                                        "type": "Expression"
+                                    },
+                                    "file_path_and_name": {
+                                        "value": "@activity('WRITE_MODEL_TO_FS').output.runOutput.file_location",
+                                        "type": "Expression"
+                                    }
+                                }
+                            },
+                            "linkedServiceName": {
+                                "referenceName": "Databricks",
+                                "type": "LinkedServiceReference"
+                            }
+                        },
+                        {
+                            "name": "EXECUTE_DQ_SQL",
+                            "type": "DatabricksNotebook",
+                            "dependsOn": [
+                                {
+                                    "activity": "GET_WAREHOUSE_DETAILS",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "notebookPath": "/Shared/customer-notebook/transform/execute_sql_from_file_2_0",
+                                "baseParameters": {
+                                    "database": {
+                                        "value": "@activity('GET_WAREHOUSE_DETAILS').output.dw_name",
+                                        "type": "Expression"
+                                    },
+                                    "server": {
+                                        "value": "@activity('GET_WAREHOUSE_DETAILS').output.dw_server_name",
+                                        "type": "Expression"
+                                    },
+                                    "file_path_and_name": {
+                                        "value": "@activity('WRITE_DQ_TESTS_TO_FS').output.runOutput.file_location",
+                                        "type": "Expression"
+                                    }
+                                }
+                            },
+                            "linkedServiceName": {
+                                "referenceName": "Databricks",
+                                "type": "LinkedServiceReference"
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "parameters": {
+            "layer": {
+                "type": "string",
+                "defaultValue": "raw_data_vault"
+            },
+            "platform_target_type": {
+                "type": "string",
+                "defaultValue": "SQLPOOL_DEDICATED"
+            },
+            "subject_area": {
+                "type": "string"
+            },
+            "execute_sql": {
+                "type": "bool",
+                "defaultValue": false
+            },
+            "is_onprem": {
+                "type": "bool",
+                "defaultValue": false
+            }
+        },
+        "folder": {
+            "name": "AUTOMATION"
+        },
+        "annotations": [],
+        "lastPublishTime": "2023-11-24T10:36:59Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}

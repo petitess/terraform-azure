@@ -1,0 +1,37 @@
+{
+    "name": "RestResourceAnonymous",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "RestServiceAnonymous",
+            "type": "LinkedServiceReference",
+            "parameters": {
+                "base_url": {
+                    "value": "@dataset().base_url",
+                    "type": "Expression"
+                }
+            }
+        },
+        "parameters": {
+            "base_url": {
+                "type": "string"
+            },
+            "relative_url": {
+                "type": "string"
+            },
+            "request_method": {
+                "type": "string",
+                "defaultValue": "GET"
+            }
+        },
+        "annotations": [],
+        "type": "RestResource",
+        "typeProperties": {
+            "relativeUrl": {
+                "value": "@dataset().relative_url",
+                "type": "Expression"
+            }
+        },
+        "schema": []
+    },
+    "type": "Microsoft.DataFactory/factories/datasets"
+}

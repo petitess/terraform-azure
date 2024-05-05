@@ -1,0 +1,304 @@
+{
+    "name": "BRONZE_LOAD_STAGE",
+    "properties": {
+        "description": "Generic pipeline for load of data mart tables (dimension & fact tables)",
+        "activities": [
+            {
+                "name": "LOG_START",
+                "type": "WebActivity",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "PUT",
+                    "headers": {
+                        "Authorization": {
+                            "value": "@concat('Bearer ', pipeline().parameters.access_token)",
+                            "type": "Expression"
+                        }
+                    },
+                    "url": {
+                        "value": "@concat(pipeline().globalParameters.ORCHESTRATION_BASE_URL, '/environments/', pipeline().parameters.payload.environment_id, '/job_execution/', pipeline().parameters.payload.job_execution_id, '/job_task/', pipeline().parameters.payload.job_execution_queue_id,'/start')",
+                        "type": "Expression"
+                    },
+                    "body": {
+                        "value": "{}",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "LOG_END",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "If on-prem",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "PUT",
+                    "headers": {
+                        "Authorization": {
+                            "value": "@concat('Bearer ', pipeline().parameters.access_token)",
+                            "type": "Expression"
+                        }
+                    },
+                    "url": {
+                        "value": "@concat(pipeline().globalParameters.ORCHESTRATION_BASE_URL, '/environments/', pipeline().parameters.payload.environment_id, '/job_execution/', pipeline().parameters.payload.job_execution_id, '/job_task/', pipeline().parameters.payload.job_execution_queue_id,'/end')",
+                        "type": "Expression"
+                    },
+                    "body": {
+                        "value": "{}",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "LOG_FAIL",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "If on-prem",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "PUT",
+                    "headers": {
+                        "Authorization": {
+                            "value": "@concat('Bearer ', pipeline().parameters.access_token)",
+                            "type": "Expression"
+                        }
+                    },
+                    "url": {
+                        "value": "@concat(pipeline().globalParameters.ORCHESTRATION_BASE_URL, '/environments/', pipeline().parameters.payload.environment_id, '/job_execution/', pipeline().parameters.payload.job_execution_id, '/job_task/', pipeline().parameters.payload.job_execution_queue_id,'/fail')",
+                        "type": "Expression"
+                    },
+                    "body": {
+                        "value": "{}",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "If on-prem",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "LOG_START",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@bool(pipeline().parameters.payload.payload.is_hybrid)",
+                        "type": "Expression"
+                    },
+                    "ifFalseActivities": [
+                        {
+                            "name": "LOAD_PERSISTENT_STAGE",
+                            "type": "Lookup",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlDWSource",
+                                    "sqlReaderQuery": {
+                                        "value": "IF EXISTS (SELECT * FROM sys.tables WHERE object_id = OBJECT_ID('persistent_stage_@{toLower(pipeline().parameters.payload.payload.data_source_name)}.@{concat(pipeline().parameters.payload.job_task_name, '_psd')}')) DROP TABLE [persistent_stage_@{toLower(pipeline().parameters.payload.payload.data_source_name)}].[@{concat(pipeline().parameters.payload.job_task_name, '_psd')}]; CREATE TABLE [persistent_stage_@{toLower(pipeline().parameters.payload.payload.data_source_name)}].[@{concat(pipeline().parameters.payload.job_task_name, '_psd')}] WITH (DISTRIBUTION = ROUND_ROBIN, HEAP) AS SELECT * FROM [persistent_stage_@{toLower(pipeline().parameters.payload.payload.data_source_name)}].[@{pipeline().parameters.payload.job_task_name}]; SELECT 'Done!'",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "dataset": {
+                                    "referenceName": "AzureSynapseAnalytics",
+                                    "type": "DatasetReference",
+                                    "parameters": {
+                                        "schema": {
+                                            "value": "@concat('persistent_stage_', toLower(pipeline().parameters.payload.payload.data_source_name))",
+                                            "type": "Expression"
+                                        },
+                                        "table": {
+                                            "value": "@pipeline().parameters.payload.job_task_name",
+                                            "type": "Expression"
+                                        },
+                                        "db_name": {
+                                            "value": "@pipeline().parameters.payload.payload.dw_name",
+                                            "type": "Expression"
+                                        }
+                                    }
+                                },
+                                "firstRowOnly": true
+                            }
+                        }
+                    ],
+                    "ifTrueActivities": [
+                        {
+                            "name": "Copy_from_HDFS",
+                            "type": "DatabricksNotebook",
+                            "dependsOn": [
+                                {
+                                    "activity": "Get latest md_effective_ts",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "notebookPath": "/Shared/transform/CopyFromHdfs",
+                                "baseParameters": {
+                                    "endpoint": {
+                                        "value": "@pipeline().parameters.payload.payload.source_entity[0].source_entity_name",
+                                        "type": "Expression"
+                                    },
+                                    "file_system": {
+                                        "value": "@concat('diaccadlsfs', split(pipeline().DataFactory, '-')[3])",
+                                        "type": "Expression"
+                                    },
+                                    "source_system": {
+                                        "value": "@pipeline().parameters.payload.payload.data_source_name",
+                                        "type": "Expression"
+                                    },
+                                    "schema_name": {
+                                        "value": "@concat('persistent_stage_', toLower(pipeline().parameters.payload.payload.data_source_name))",
+                                        "type": "Expression"
+                                    },
+                                    "table_name": {
+                                        "value": "@concat(toLower(pipeline().parameters.payload.job_task_name))",
+                                        "type": "Expression"
+                                    },
+                                    "max_md_effective_ts": {
+                                        "value": "@activity('Get latest md_effective_ts').output.firstRow.max_md_effective_ts",
+                                        "type": "Expression"
+                                    },
+                                    "pipeline_run_id": {
+                                        "value": "@pipeline().RunId",
+                                        "type": "Expression"
+                                    }
+                                }
+                            },
+                            "linkedServiceName": {
+                                "referenceName": "Databricks",
+                                "type": "LinkedServiceReference"
+                            }
+                        },
+                        {
+                            "name": "Get latest md_effective_ts",
+                            "type": "Lookup",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlServerSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat('SELECT CONVERT(VARCHAR(19), ISNULL(MAX(md_effective_ts), ''1900-01-01'') ,121) as max_md_effective_ts FROM ',\n'[persistent_stage_', toLower(pipeline().parameters.payload.payload.data_source_name) , ']',\n'.',\n'[', toLower(pipeline().parameters.payload.payload.source_entity[0].source_entity_name), ']'\n)",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "dataset": {
+                                    "referenceName": "SqlServerDataset",
+                                    "type": "DatasetReference",
+                                    "parameters": {
+                                        "schema_name": "sys",
+                                        "table_name": "tables"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "parameters": {
+            "access_token": {
+                "type": "string"
+            },
+            "payload": {
+                "type": "object"
+            },
+            "from_date": {
+                "type": "string"
+            },
+            "to_date": {
+                "type": "string"
+            }
+        },
+        "variables": {
+            "start_time": {
+                "type": "String"
+            },
+            "api_response": {
+                "type": "Array"
+            },
+            "service_level": {
+                "type": "String"
+            },
+            "file_list": {
+                "type": "Array"
+            },
+            "sql_pool_name": {
+                "type": "String"
+            }
+        },
+        "folder": {
+            "name": "ORCHESTRATION/JOB_STEP_EXECUTORS"
+        },
+        "annotations": [],
+        "lastPublishTime": "2023-11-28T15:16:31Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}
