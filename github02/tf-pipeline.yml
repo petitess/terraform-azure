@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   # schedule:
   #   - cron:  '0 3 * * *'
-
+# repo:petitess/yaml:environment:dev
 env:
   ARM_CLIENT_ID: ${{ vars.CLIENT_ID }}  
   ARM_USE_OIDC: true
