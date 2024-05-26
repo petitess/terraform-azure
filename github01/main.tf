@@ -85,6 +85,26 @@ resource "azuread_application_federated_identity_credential" "credential" {
   subject = "repo:${var.github_org}/${var.github_repo}:environment:${var.env}"
 }
 
+resource "azuread_application_federated_identity_credential" "credential_branch" {
+  display_name   = "github-branch"
+  application_id = azuread_application.app.id
+  audiences = [
+    "api://AzureADTokenExchange"
+  ]
+  issuer  = "https://token.actions.githubusercontent.com"
+  subject = "repo:${var.github_org}/${var.github_repo}:ref:refs/heads/main"
+}
+
+resource "azuread_application_federated_identity_credential" "credential_pr" {
+  display_name   = "github-pr"
+  application_id = azuread_application.app.id
+  audiences = [
+    "api://AzureADTokenExchange"
+  ]
+  issuer  = "https://token.actions.githubusercontent.com"
+  subject = "repo:${var.github_org}/${var.github_repo}:pull_request"
+}
+
 resource "azuread_service_principal" "app" {
   client_id = azuread_application.app.client_id
 }
