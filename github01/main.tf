@@ -21,6 +21,10 @@ data "azuread_service_principal" "azure" {
   display_name = "Azure Graph"
 }
 
+data "github_repository" "repo" {
+  full_name = "${var.github_org}/${var.github_repo}"
+}
+
 resource "azuread_application" "app" {
   display_name    = var.service_principal[var.env]
   identifier_uris = ["api://github"]
@@ -110,6 +114,23 @@ resource "azurerm_role_assignment" "sp" {
   scope                = data.azurerm_subscription.sub.id
   principal_id         = azuread_service_principal.app.object_id
   role_definition_name = "Owner"
+}
+
+resource "github_branch_protection" "main" {
+  repository_id                   = data.github_repository.repo.id
+  pattern                         = "_main"
+  enforce_admins                  = true
+  require_conversation_resolution = true
+
+  required_status_checks {
+    strict = true
+  }
+
+  required_pull_request_reviews {
+    dismiss_stale_reviews           = true
+    require_code_owner_reviews      = true
+    required_approving_review_count = 1
+  }
 }
 
 output "github_vars" {
