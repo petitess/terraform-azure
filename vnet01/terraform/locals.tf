@@ -293,7 +293,7 @@ locals {
           access                     = "Allow"
           destination_address_prefix = "VirtualNetwork"
           destination_port_range     = "*"
-          direction                  = "Inbound"
+          direction                  = "Outbound"
           name                       = "nsgsr-allow-dbw-vnet-outbound"
           priority                   = 210
           protocol                   = "*"
@@ -305,7 +305,7 @@ locals {
           destination_address_prefix = "Sql"
           destination_port_ranges = [
           "3306"]
-          direction             = "Inbound"
+          direction             = "Outbound"
           name                  = "nsgsr-allow-dbw-sql-outbound"
           priority              = 220
           protocol              = "*"
@@ -316,7 +316,7 @@ locals {
           access                     = "Allow"
           destination_address_prefix = "Storage"
           destination_port_range     = "443"
-          direction                  = "Inbound"
+          direction                  = "Outbound"
           name                       = "nsgsr-allow-dbw-st-outbound"
           priority                   = 230
           protocol                   = "*"
@@ -327,7 +327,7 @@ locals {
           access                     = "Allow"
           destination_address_prefix = "EventHub"
           destination_port_range     = "9093"
-          direction                  = "Inbound"
+          direction                  = "Outbound"
           name                       = "nsgsr-allow-dbw-eventhub-outbound"
           priority                   = 240
           protocol                   = "*"
