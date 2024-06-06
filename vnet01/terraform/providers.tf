@@ -3,7 +3,7 @@ terraform {
 
   backend "azurerm" {
     container_name   = "tfstate-databricks"
-    key              = "databricks.terraform.tfstate"
+    key              = "infra-system.terraform.tfstate"
     use_azuread_auth = true
   }
 
