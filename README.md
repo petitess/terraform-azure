@@ -98,6 +98,7 @@ icacls.exe terraform-azure.pem /inheritance:r
 | automationaccount02 | Runbooks from files + link schedules
 | availabilityset01 | Multiple availability sets
 | citrix01 | Citrix NetScaler(ADC) with high-availability(HA) 
+| databricks01 | vnet, multiple env, devops, yaml, branch protection
 | datafactory01 | Data factory, pipelines, datasets, linked services
 | dns01 | Public DNS zone - array 
 | github01 | Service Principal, Fed Credential, RBAC, YAML
