@@ -1,0 +1,54 @@
+trigger: none
+
+pool:
+  vmImage: ubuntu-latest
+
+parameters:
+  - name: environments
+    type: object
+    default:
+      - dev
+      #- stg
+
+variables:
+  workingDirectory: terraform
+
+stages:
+  - ${{ each environment in parameters.environments }}:
+    - stage: plan_${{ environment }}
+      displayName: "Init + Plan (${{ environment }})"
+      variables:
+        - name: azureSubscription
+          ? ${{ if eq(environment, 'dev') }} 
+          : value: sub-test-01 
+          ${{ else }}: 
+            value: sub-test-02
+      jobs:
+        - job: plan
+          displayName: Plan (${{ environment }})
+          steps:
+            - task: AzureCLI@2
+              displayName: Set environment variables
+              inputs:
+                azureSubscription: ${{ variables.azureSubscription }}
+                scriptType: pscore
+                scriptLocation: inlineScript
+                addSpnToEnvironment: true
+                workingDirectory: ${{ variables.workingDirectory }}
+                inlineScript: |
+                  Write-Host "##vso[task.setvariable variable=ARM_USE_OIDC]true"
+                  Write-Host "##vso[task.setvariable variable=ARM_OIDC_TOKEN]$env:idToken"
+                  Write-Host "##vso[task.setvariable variable=ARM_CLIENT_ID]$env:servicePrincipalId"
+                  Write-Host "##vso[task.setvariable variable=ARM_SUBSCRIPTION_ID]$(az account show --query id -o tsv)"
+                  Write-Host "##vso[task.setvariable variable=ARM_TENANT_ID]$env:tenantId"
+
+            - task: AzureCLI@2
+              displayName: "Init + Plan"
+              inputs:
+                azureSubscription: ${{ variables.azureSubscription }}
+                scriptType: pscore
+                scriptLocation: scriptPath
+                addSpnToEnvironment: true
+                workingDirectory: ${{ variables.workingDirectory }}
+                scriptPath: terraform/init-plan.ps1
+                arguments: ${{ environment }}
