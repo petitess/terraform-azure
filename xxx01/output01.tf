@@ -14,6 +14,8 @@ locals {
       a2 = { grp : "gdg76553", wse : "s34dv" }
       a3 = { grp : "gd2354r53", wse : "sd53v" }
       a4 = { grp : "gddr53", wse : "" }
+      a5 = { grp : "duplicate", wse : "" }
+      a6 = { grp : "duplicate", wse : "sdv" }
     }
   }
 }
@@ -27,5 +29,11 @@ output "abc" {
 output "def" {
   value = {
     for x in local.object[local.env] : x.grp => x.wse if x.wse != ""
+  }
+}
+
+output "fgh" {
+  value = {
+    for x in local.object[local.env] : x.grp => x.wse... #if x.wse != ""
   }
 }
