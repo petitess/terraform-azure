@@ -43,3 +43,9 @@ output "ijk" {
     for x, y in local.object[local.env] : x => y.wse 
   }
 }
+
+output "lmn" {
+  value = {
+    for x, y in local.object[local.env] : x => y.wse if y.wse != ""
+  }
+}
