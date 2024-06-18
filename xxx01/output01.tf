@@ -37,3 +37,9 @@ output "fgh" {
     for x in local.object[local.env] : x.grp => x.wse... #if x.wse != ""
   }
 }
+
+output "ijk" {
+  value = {
+    for x, y in local.object[local.env] : x => y.wse 
+  }
+}
