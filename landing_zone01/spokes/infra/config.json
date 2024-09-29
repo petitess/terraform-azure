@@ -1,0 +1,10 @@
+{
+    "sub": {
+        "dev": "sub-test-02",
+        "prod": "sub-test-03"
+    },
+    "tfstate": {
+        "dev": "infra-dev.tfstate",
+        "prod": "infra-prod.tfstate"
+    }
+}
