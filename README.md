@@ -97,6 +97,7 @@ icacls.exe terraform-azure.pem /inheritance:r
 | automationaccount01 | Scheduled Runbooks 
 | automationaccount02 | Runbooks from files + link schedules
 | availabilityset01 | Multiple availability sets
+| azurefirewall01 | Azure Firewall Policy - Network rule
 | citrix01 | Citrix NetScaler(ADC) with high-availability(HA) 
 | databricks01 | vnet, multiple env, devops, yaml, branch protection
 | datafactory01 | Data factory, pipelines, datasets, linked services
@@ -105,6 +106,7 @@ icacls.exe terraform-azure.pem /inheritance:r
 | github01 | Service Principal, Fed Credential, RBAC, YAML
 | github02 | Terraform deployment, matrix, OIDC
 | keyvault01 | Create Secrets for VMs 
+| landing_zone01 | hub, spoke, peering, firewall policy
 | loadbalancer01 | Internal load balancer
 | loadbalancer02 | External load balancer
 | maintenance01 | Update management center 
