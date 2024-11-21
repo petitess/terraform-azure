@@ -31,7 +31,7 @@ locals {
   prefix       = "dev"
   user_object_id = ""
   table_name = "githubtest"
-  dataStructure = [
+  data_structure = [
     {
       name = "TimeGenerated"
       type = "datetime"
@@ -90,7 +90,7 @@ resource "azapi_resource" "log_table" {
       plan                 = "Analytics"
       schema = {
         name    = "${local.table_name}_CL"
-        columns = local.dataStructure
+        columns = local.data_structure
       }
       retentionInDays = 30
     }
@@ -121,13 +121,13 @@ resource "azurerm_monitor_data_collection_rule" "monitor" {
     transform_kql = "source"
     output_stream = "Custom-${local.table_name}_CL"
   }
-  dynamic "stream_declaration" {
-    for_each = local.dataStructure
-    content {
-      stream_name = "Custom-${local.table_name}"
-      column {
-        name = stream_declaration.value.name
-        type = stream_declaration.value.type
+  stream_declaration {
+    stream_name = "Custom-${local.table_name}"
+    dynamic "column" {
+      for_each = local.data_structure
+      content {
+        name = column.value.name
+        type = column.value.type
       }
     }
   }
