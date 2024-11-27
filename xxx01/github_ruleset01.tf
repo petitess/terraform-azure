@@ -214,5 +214,5 @@ output "github_vars" {
 
 
 # terraform init -backend-config="storage_account_name=stabcsdevweucore" -reconfigure
-# terraform apply --auto-approve -var=env=dev
+# terraform plan -var=env=dev
 # terraform apply --auto-approve -var=env=dev
