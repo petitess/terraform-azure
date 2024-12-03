@@ -33,7 +33,7 @@ variable "env" {
 }
 
 locals {
-  tenant_id  = "e339bd4b-2e3b-4035-a452-2112d502f2ff"
+  tenant_id  = "abcd-2112d502f2ff"
   github_org = "045-ABCD-APPLICATIONS"
   github_repo = {
     dev = "azure-application-abcd-analytics-dev-westeurope"
