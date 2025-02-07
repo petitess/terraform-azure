@@ -1,0 +1,105 @@
+name: "Deploy to AKS 1"
+
+on:
+  workflow_dispatch: 
+  push:
+    paths: 
+      - '.github/workflows/deploy-to-aks-1.yml'
+
+permissions: 
+  id-token: write
+  contents: write
+  actions: read
+
+env: 
+  ACR_NAME: 'acrboombasticdev01'
+  APP_SOURCE: './kubernetes01/my_app'
+  CLUSTER_NAME: aks-dev-01
+  CLUSTER_RG: rg-aks-dev-01
+  MY_ACR_IMAGE: sample/hello-world
+  MY_ACR_IMAGE_TAG: v7
+  MY_ACR_APP_NAME: my-devops-website-1
+
+jobs:
+  push_to_acr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.CLIENT_ID }}
+          tenant-id: ${{ vars.TENANT_ID }}
+          subscription-id: ${{ vars.SUB_ID }}
+
+      - name: Build and Push To Acr
+        shell: pwsh 
+        run: | 
+          az acr login -n '${{ env.ACR_NAME }}'
+          az acr build -t ${{env.MY_ACR_IMAGE}}:${{env.MY_ACR_IMAGE_TAG}} -r '${{ env.ACR_NAME }}' '${{ env.APP_SOURCE }}'
+
+      - name: Import To Acr
+        shell: pwsh 
+        run: | 
+          az acr login -n '${{ env.ACR_NAME }}'
+          az acr import -n '${{ env.ACR_NAME }}' --source mcr.microsoft.com/azurelinux/base/nginx:1.25 -t 'my_nginx:${{ github.run_id }}'
+
+  deploy_to_aks:
+    runs-on: ubuntu-latest
+    needs: push_to_acr
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.CLIENT_ID }}
+          tenant-id: ${{ vars.TENANT_ID }}
+          subscription-id: ${{ vars.SUB_ID }}
+
+      - name: Setup kubectl
+        id: install-kubectl
+        uses: azure/setup-kubectl@v3
+
+      - uses: azure/use-kubelogin@v1
+        name: Setup kubelogin
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          kubelogin-version: 'latest'
+
+      - name: Set Creds
+        shell: pwsh 
+        run: | 
+          az aks get-credentials --resource-group ${{env.CLUSTER_RG}} --name ${{env.CLUSTER_NAME}} --overwrite-existing
+          kubelogin convert-kubeconfig -l azurecli 
+
+      - name: Generate Manifest
+        shell: pwsh 
+        id: manifest
+        run: | 
+          New-Item -Path ./kubernetes01 -ItemType Directory -Name manifests
+          kubectl create deploy ${{env.MY_ACR_APP_NAME}} --image ${{ env.ACR_NAME }}.azurecr.io/${{env.MY_ACR_IMAGE}}:${{env.MY_ACR_IMAGE_TAG}} --dry-run=client -o yaml > ./kubernetes01/manifests/${{env.MY_ACR_APP_NAME}}.yaml
+          kubectl expose deploy ${{env.MY_ACR_APP_NAME}} --type LoadBalancer --port 80 --dry-run -o yaml > ./kubernetes01/manifests/${{env.MY_ACR_APP_NAME}}-svc-lb.yaml
+          $Config = kubectl config view --output json
+          "KCONFIG=$Config" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - uses: azure/k8s-set-context@v4
+        name: Set Context
+        with:
+          method: kubeconfig
+          kubeconfig: '${{ steps.manifest.outputs.KCONFIG }}'
+        id: setcontext
+
+      - uses: Azure/k8s-deploy@v5
+        name: Deploy
+        with:
+          namespace: 'default'
+          action: deploy
+          skip-tls-verify: true
+          manifests: |
+              ./kubernetes01/manifests/${{env.MY_ACR_APP_NAME}}.yaml
+              ./kubernetes01/manifests/${{env.MY_ACR_APP_NAME}}-svc-lb.yaml
+          images: '${{ env.ACR_NAME }}.azurecr.io/${{env.MY_ACR_IMAGE}}:${{env.MY_ACR_IMAGE_TAG}}'

@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: myingress
+  annotations:
+    kubernetes.io/ingress.class: azure/application-gateway
+  labels:
+    name: myingress
+spec:
+  rules:
+    - http:
+        paths:
+          - path: "/"
+            backend:
+              service:
+                name: myingress-srv
+                port:
+                  number: 80
+            pathType: Exact
