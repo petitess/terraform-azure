@@ -107,6 +107,7 @@ icacls.exe terraform-azure.pem /inheritance:r
 | github01 | Service Principal, Fed Credential, RBAC, YAML
 | github02 | Terraform deployment, matrix, OIDC
 | keyvault01 | Create Secrets for VMs 
+| kubernetes01 | acr, aci, grafana, storage, pipeline, agw
 | landing_zone01 | hub, spoke, peering, firewall policy
 | loadbalancer01 | Internal load balancer
 | loadbalancer02 | External load balancer
