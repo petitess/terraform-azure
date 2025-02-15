@@ -1,3 +1,4 @@
+```terraform
 locals {
   my_list = [
     {
@@ -21,9 +22,11 @@ output "weather" {
     if s != null
   }
 }
-
-# OUTPUT:
-# weather = {
-#        rainy = "rainy"
-#        sunny = "sunny"
-#     }
+```
+#### OUTPUT:
+```
+ weather = {
+        rainy = "rainy"
+        sunny = "sunny"
+     }
+```
