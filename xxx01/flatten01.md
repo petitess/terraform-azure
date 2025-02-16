@@ -8,6 +8,10 @@ locals {
     {
       name = "EFGH"
       id   = "5678"
+    },
+    {
+      name = "IJKL"
+      id   = ""
     }
   ]
 
@@ -20,57 +24,34 @@ locals {
       name = "EFGH"
       id   = "5678"
     }
+    object03 = {
+      name = "IJKL"
+      id   = ""
+    }
   }
-}
-
-output "list01" {
-  value = local.list01
 }
 
 output "list01_id" {
   value = flatten(local.list01.*.id)
 }
 
-output "map01" {
-  value = local.map01
-}
-
 output "map01_id" {
   value = flatten([
-    for k, sca in local.map01 : [
-      sca.id
-    ]
+    for k, v in local.map01 : [
+      v.id
+    ] if v.id != ""
   ])
 }
 ```
 #### OUTPUTS:
-```
-list01 = [
-  {
-      id   = "1234"
-      name = "ABCD"
-  },
-  {
-      id   = "5678"
-      name = "EFGH"
-  },
-]
+```terraform
 list01_id = [
-    "1234",
-    "5678",
+  "1234",
+  "5678",
+  "",
 ]
-map01 = {
-  object01 = {
-      id   = "1234"
-      name = "ABCD"
-  }
-  object02 = {
-      id   = "5678"
-      name = "EFGH"
-  }
-}
-map01_id = [
-    "1234",
-    "5678",
+map01_id  = [
+  "1234",
+  "5678",
 ]
 ```
