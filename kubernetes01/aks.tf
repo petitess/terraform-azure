@@ -1,6 +1,8 @@
 locals {
   private_cluster             = false
   ingress_application_gateway = false
+  agw_for_containers          = true
+  entra_group_id              = ""
   node_pools = {
     # "pool01" = {
     #   name       = "pool01"
@@ -35,6 +37,31 @@ resource "azurerm_user_assigned_identity" "aks" {
   location            = azurerm_resource_group.aks.location
   tags                = local.tags
 }
+//For Application Gateway for Containers
+resource "azurerm_user_assigned_identity" "alb" {
+  count               = local.agw_for_containers ? 1 : 0
+  name                = "azure-alb-identity"
+  resource_group_name = azurerm_resource_group.aks.name
+  location            = azurerm_resource_group.aks.location
+  tags                = local.tags
+}
+//For Application Gateway for Containers
+resource "azurerm_federated_identity_credential" "aks" {
+  count               = local.agw_for_containers ? 1 : 0
+  name                = "azure-alb-identity"
+  resource_group_name = azurerm_resource_group.aks.name
+  audience            = ["api://AzureADTokenExchange"]
+  issuer              = azurerm_kubernetes_cluster.aks.oidc_issuer_url
+  parent_id           = azurerm_user_assigned_identity.alb[0].id
+  subject             = "system:serviceaccount:azure-alb-system:alb-controller-sa"
+}
+//For Application Gateway for Containers
+resource "azurerm_role_assignment" "aks_alb_snet" {
+  count                = local.agw_for_containers ? 1 : 0
+  principal_id         = azurerm_user_assigned_identity.alb[0].principal_id
+  role_definition_name = "Network Contributor"
+  scope                = azurerm_subnet.subnets["snet-aks-alb"].id
+}
 //For private cluster
 resource "azurerm_role_assignment" "aks_dns" {
   count                = local.private_cluster ? 1 : 0
@@ -48,6 +75,21 @@ resource "azurerm_role_assignment" "aks_vnet" {
   principal_id         = azurerm_user_assigned_identity.aks[0].principal_id
   role_definition_name = "Network Contributor"
   scope                = azurerm_resource_group.hub.id
+}
+//For Application Gateway for Containers
+resource "azurerm_role_assignment" "aks_alb" {
+  count                = local.agw_for_containers ? 1 : 0
+  principal_id         = azurerm_user_assigned_identity.alb[0].principal_id
+  role_definition_name = "Reader"
+  scope                = azurerm_kubernetes_cluster.aks.node_resource_group_id
+}
+
+//For Application Gateway for Containers
+resource "azurerm_role_assignment" "aks_alb_agw" {
+  count                = local.agw_for_containers ? 1 : 0
+  principal_id         = azurerm_user_assigned_identity.alb[0].principal_id
+  role_definition_name = "AppGw for Containers Configuration Manager"
+  scope                = azurerm_kubernetes_cluster.aks.node_resource_group_id
 }
 
 resource "azurerm_kubernetes_cluster" "aks" {
@@ -65,12 +107,26 @@ resource "azurerm_kubernetes_cluster" "aks" {
     type         = local.private_cluster ? "UserAssigned" : "SystemAssigned"
     identity_ids = local.private_cluster ? [azurerm_user_assigned_identity.aks[0].id] : []
   }
-  azure_active_directory_role_based_access_control {
-    azure_rbac_enabled = true
-    tenant_id          = data.azurerm_client_config.current.tenant_id
+
+  dynamic "azure_active_directory_role_based_access_control" {
+    for_each = local.entra_group_id != "" ? [1] : []
+    content {
+      admin_group_object_ids = [ local.entra_group_id ]
+      azure_rbac_enabled = false
+      tenant_id = data.azurerm_client_config.current.tenant_id
+    }
   }
+
+  dynamic "azure_active_directory_role_based_access_control" {
+    for_each = local.entra_group_id == "" ? [1] : []
+    content {
+      azure_rbac_enabled = true
+      tenant_id = data.azurerm_client_config.current.tenant_id
+    }
+  }
+
   default_node_pool {
-    orchestrator_version        = "1.30"
+    orchestrator_version        = "1.31"
     tags                        = local.tags
     name                        = "default"
     node_count                  = 2
@@ -122,6 +178,9 @@ resource "azurerm_kubernetes_cluster" "aks" {
       subnet_id    = azurerm_subnet.subnets["snet-aks-agic"].id
     }
   }
+
+  workload_identity_enabled = true
+  oidc_issuer_enabled       = true
 }
 //For virtual nodes
 resource "azurerm_role_assignment" "aks_virtual_nodes" {

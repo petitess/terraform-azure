@@ -1,0 +1,8 @@
+apiVersion: alb.networking.azure.io/v1
+kind: ApplicationLoadBalancer
+metadata:
+  name: alb-test
+  namespace: alb-test-infra
+spec:
+  associations:
+    - '/subscriptions/0dcc13b7-1a10-483e-95aa-fe7e71802e2e/resourceGroups/rg-hub-dev-01/providers/Microsoft.Network/virtualNetworks/vnet-hub-dev01/subnets/snet-aks-alb'

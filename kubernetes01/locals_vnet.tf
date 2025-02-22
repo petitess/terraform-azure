@@ -1,5 +1,5 @@
 locals {
-  location = "swedencentral"
+  location = "westeurope"
   prefix   = "hub-${var.env}"
   tags = {
     Environment = var.env
@@ -14,28 +14,28 @@ locals {
 
   subnets = [
     {
-      name             = "GatewaySubnet"
-      address_prefixes = [cidrsubnet(local.vnet_address_space[0], 9, 0)]
+      name              = "GatewaySubnet"
+      address_prefixes  = [cidrsubnet(local.vnet_address_space[0], 9, 0)]
       service_endpoints = ["Microsoft.Storage"]
     },
     {
-      name             = "AzureFirewallSubnet"
-      address_prefixes = [cidrsubnet(local.vnet_address_space[0], 9, 1)]
+      name              = "AzureFirewallSubnet"
+      address_prefixes  = [cidrsubnet(local.vnet_address_space[0], 9, 1)]
       service_endpoints = ["Microsoft.Storage"]
     },
     {
-      name             = "AzureBastionSubnet"
-      address_prefixes = [cidrsubnet(local.vnet_address_space[0], 9, 2)]
+      name              = "AzureBastionSubnet"
+      address_prefixes  = [cidrsubnet(local.vnet_address_space[0], 9, 2)]
       service_endpoints = ["Microsoft.Storage"]
     },
     {
-      name             = "snet-pep"
-      address_prefixes = [cidrsubnet(local.vnet_address_space[0], 8, 3)]
+      name              = "snet-pep"
+      address_prefixes  = [cidrsubnet(local.vnet_address_space[0], 8, 3)]
       service_endpoints = ["Microsoft.Storage"]
     },
     {
-      name             = "snet-aks"
-      address_prefixes = [cidrsubnet(local.vnet_address_space[0], 8, 4)]
+      name              = "snet-aks"
+      address_prefixes  = [cidrsubnet(local.vnet_address_space[0], 8, 4)]
       service_endpoints = ["Microsoft.Storage"]
     },
     {
@@ -46,7 +46,13 @@ locals {
     },
     {
       name              = "snet-aks-agic"
-      address_prefixes  = [cidrsubnet(local.vnet_address_space[0], 4, 6)]
+      address_prefixes  = [cidrsubnet(local.vnet_address_space[0], 6, 6)]
+      service_endpoints = ["Microsoft.Storage"]
+    },
+    {
+      name              = "snet-aks-alb"
+      address_prefixes  = [cidrsubnet(local.vnet_address_space[0], 6, 7)]
+      delegations       = ["Microsoft.ServiceNetworking/trafficControllers"]
       service_endpoints = ["Microsoft.Storage"]
     }
   ]
@@ -210,6 +216,11 @@ locals {
     {
       name          = "nsg-snet-aks-aci"
       subnetname    = "snet-aks-aci"
+      security_rule = []
+    },
+    {
+      name          = "nsg-snet-aks-alb"
+      subnetname    = "snet-aks-alb"
       security_rule = []
     }
   ]

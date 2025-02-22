@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-01
+  annotations:
+    alb.networking.azure.io/alb-name: alb-test
+    alb.networking.azure.io/alb-namespace: alb-test-infra
+spec:
+  ingressClassName: azure-alb-external
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nginx-svc
+            port:
+              number: 80

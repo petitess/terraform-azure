@@ -1,5 +1,5 @@
 variable "subid" {
-  default = "123-fe7e71802e2e"
+  default = "abc"
 }
 variable "env" {
   default = "dev"

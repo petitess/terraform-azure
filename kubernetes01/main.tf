@@ -30,7 +30,7 @@ provider "azuread" {
 data "azurerm_client_config" "current" {}
 
 locals {
-  aks_user = ""
+  aks_user = "1ace81ac-e923-411d-af9a-531b450ec258"
   pdnsz = [
     "privatelink.vaultcore.azure.net",
     "privatelink.blob.core.windows.net",
@@ -46,6 +46,13 @@ resource "azurerm_role_assignment" "user" {
   scope                = azurerm_resource_group.aks.id
   principal_id         = local.aks_user
   role_definition_name = "Azure Kubernetes Service RBAC Admin"
+}
+
+resource "azurerm_role_assignment" "user2" {
+  count                = local.aks_user != "" ? 1 : 0
+  scope                = azurerm_resource_group.aks.id
+  principal_id         = local.aks_user
+  role_definition_name = "Azure Kubernetes Fleet Manager RBAC Admin"
 }
 
 resource "azurerm_role_assignment" "user_grafana" {

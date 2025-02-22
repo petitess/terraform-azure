@@ -5,7 +5,7 @@ locals {
   queues     = []
   tables     = []
   st_peps    = ["file"]
-  my_ip = "1.150.104.23"
+  my_ip = "188.150.104.230"
 }
 
 resource "azurerm_storage_account" "aks" {
