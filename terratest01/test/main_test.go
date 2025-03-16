@@ -3,11 +3,14 @@ package main
 import (
 	"testing"
 
+	"github.com/gruntwork-io/terratest/modules/azure"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestTerraform_github(t *testing.T) {
+var sub_id string = "123"
+
+func TestTerraform_kv(t *testing.T) {
 	// Construct the terraform options with default retryable errors to handle the most common
 	// retryable errors in terraform testing.
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
@@ -27,4 +30,5 @@ func TestTerraform_github(t *testing.T) {
 
 	output2 := terraform.Output(t, terraformOptions, "kv_rbac")
 	assert.Equal(t, "true", output2)
+	azure.GetKeyVault(t, "rg-unitest-01", "kv-sys-unitest-01", sub_id)
 }
