@@ -4,6 +4,9 @@ locals {
   location       = "swedencentral"
   key_vault_name = "kv-sys-${local.prefix}-01"
   allowed_ips    = []
+  tags = {
+    ENV = var.env
+  }
 }
 
 data "azurerm_subscription" "sub" {}
@@ -35,3 +38,5 @@ resource "azurerm_key_vault" "kv" {
 output "kv_public_access" {
   value = azurerm_key_vault.kv.public_network_access_enabled
 }
+
+
