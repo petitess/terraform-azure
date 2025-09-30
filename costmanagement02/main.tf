@@ -72,40 +72,24 @@ resource "azapi_resource" "cost_actual" {
   type      = "Microsoft.CostManagement/exports@2025-03-01"
   name      = "cost-export-actual"
   parent_id = "/subscriptions/${local.sub_id}"
-  identity {
-    type = "SystemAssigned"
-  }
-  location = local.location
+  location  = local.location
   body = {
+    identity = {
+      type = "SystemAssigned"
+    }
     properties = {
       definition = {
         type      = "ActualCost"
         timeframe = "MonthToDate"
-        # dataset = {
-        #   granularity = "Daily"
-        #   aggregation = {
-        #     totalCost = {
-        #       name     = "PreTaxCost"
-        #       function = "Sum"
-        #     }
-        #   }
-        #   grouping = [
-        #     {
-        #       type = "Dimension"
-        #       name = "ResourceId"
-        #     }
-        #   ]
-        # }
       }
       deliveryInfo = {
         destination = {
           resourceId     = azurerm_storage_account.cost.id
           container      = azurerm_storage_container.cost.name
           rootFolderPath = "exports"
-          type : "AzureBlob"
         }
       }
-      compressionMode : "none"
+      compressionMode : "None"
       format = "Csv"
       dataOverwriteBehavior : "OverwritePreviousReport"
       schedule = {
@@ -118,17 +102,20 @@ resource "azapi_resource" "cost_actual" {
       }
     }
   }
+  lifecycle {
+    ignore_changes = [body.properties.schedule.recurrencePeriod]
+  }
 }
 
 resource "azapi_resource" "cost_usage" {
   type      = "Microsoft.CostManagement/exports@2025-03-01"
   name      = "cost-export-usage"
   parent_id = "/subscriptions/${local.sub_id}"
-  identity {
-    type = "SystemAssigned"
-  }
-  location = local.location
+  location  = local.location
   body = {
+    identity = {
+      type = "SystemAssigned"
+    }
     properties = {
       definition = {
         type      = "Usage"
@@ -139,10 +126,9 @@ resource "azapi_resource" "cost_usage" {
           resourceId     = azurerm_storage_account.cost.id
           container      = azurerm_storage_container.cost.name
           rootFolderPath = "exports"
-          type : "AzureBlob"
         }
       }
-      compressionMode : "none"
+      compressionMode : "None"
       format = "Csv"
       dataOverwriteBehavior : "OverwritePreviousReport"
       schedule = {
@@ -155,6 +141,9 @@ resource "azapi_resource" "cost_usage" {
       }
     }
   }
+  lifecycle {
+    ignore_changes = [body.properties.schedule.recurrencePeriod]
+  }
 }
 
 
@@ -162,11 +151,11 @@ resource "azapi_resource" "cost_amortized" {
   type      = "Microsoft.CostManagement/exports@2025-03-01"
   name      = "cost-export-amortized"
   parent_id = "/subscriptions/${local.sub_id}"
-  identity {
-    type = "SystemAssigned"
-  }
-  location = local.location
+  location  = local.location
   body = {
+    identity = {
+      type = "SystemAssigned"
+    }
     properties = {
       definition = {
         type      = "AmortizedCost"
@@ -177,10 +166,9 @@ resource "azapi_resource" "cost_amortized" {
           resourceId     = azurerm_storage_account.cost.id
           container      = azurerm_storage_container.cost.name
           rootFolderPath = "exports"
-          type : "AzureBlob"
         }
       }
-      compressionMode : "none"
+      compressionMode : "None"
       format = "Csv"
       dataOverwriteBehavior : "OverwritePreviousReport"
       schedule = {
@@ -192,5 +180,8 @@ resource "azapi_resource" "cost_amortized" {
         }
       }
     }
+  }
+  lifecycle {
+    ignore_changes = [body.properties.schedule.recurrencePeriod]
   }
 }
