@@ -96,6 +96,10 @@ variable "function_apps" {
       token_store_sas_setting_name            = optional(string)
       validate_nonce                          = optional(bool)
     }))
+    slot = optional(object({
+      name = string
+      pep_ip_address              = string
+    }))
   }))
   default = {
     "func-republik01" = {
@@ -133,6 +137,10 @@ variable "function_apps" {
         www_authentication_disabled           = false
         allowed_audiences                     = ["api://123456-abcdef-xyz"]
         token_store_enabled                   = true
+      }
+      slot = {
+        name = "stage"
+        pep_ip_address              = "10.1.1.135"
       }
     }
     "func-republik002" = {
