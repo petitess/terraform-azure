@@ -110,7 +110,6 @@ resource "azurerm_linux_function_app" "func" {
 }
 
 resource "azurerm_linux_function_app_slot" "slot" {
-  # for_each            = var.function_apps
   for_each = {
     for key, f in var.function_apps : key => f
     if try(f.slot, null) != null
