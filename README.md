@@ -107,6 +107,7 @@ icacls.exe terraform-azure.pem /inheritance:r
 | datafactory01 | Data factory, pipelines, datasets, linked services
 | dns01 | Public DNS zone - array 
 | functionapp01 | elastic premium, pep, auth, slot
+| functionapp02 | flex consumption, pep, auth
 | github01 | Service Principal, Fed Credential, RBAC, YAML
 | github02 | Terraform deployment, matrix, OIDC
 | keyvault01 | Create Secrets for VMs 
