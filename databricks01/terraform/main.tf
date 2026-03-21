@@ -36,26 +36,8 @@ resource "azurerm_private_dns_zone_virtual_network_link" "link" {
 resource "azurerm_role_assignment" "rbac_dbw_kv" {
   scope                = azurerm_key_vault.keyvault.id
   role_definition_name = "Key Vault Administrator"
-  principal_id         = "1fc0c7b1-4457-49b4-ac1e-5a7dc4205730"
+  principal_id         = "c5e82d0b-9fb6-4da3-b6b0-b7cbd87cf7ec"
   //Found in Entra, AppId: 2ff814a6-3304-4ab8-85cb-cd0e6f879c1d
-}
-
-resource "azurerm_role_assignment" "rbac_sp_dbw_kv" {
-  scope                = azurerm_key_vault.keyvault.id
-  role_definition_name = "Key Vault Administrator"
-  principal_id         = local.sp_dbw[var.env]
-}
-
-resource "azurerm_role_assignment" "rbac_sp_dbw_sub" {
-  scope                = data.azurerm_subscription.sub.id
-  role_definition_name = "Contributor"
-  principal_id         = local.sp_dbw[var.env]
-}
-
-resource "azurerm_role_assignment" "rbac_sp" {
-  scope                = azurerm_key_vault.keyvault.id
-  role_definition_name = "Key Vault Administrator"
-  principal_id         = local.sp[var.env]
 }
 
 

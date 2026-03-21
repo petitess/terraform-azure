@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.8.0"
+  required_version = ">= 1.14.7"
 
   backend "azurerm" {
     container_name   = "tfstate-databricks"
@@ -10,7 +10,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 3.106.0"
+      version = "~> 4.65.0"
     }
   }
 }

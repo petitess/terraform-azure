@@ -1,0 +1,10 @@
+# Do not include azure-functions-worker in this file
+# The Python Worker is managed by the Azure Functions platform
+# Manually managing azure-functions-worker may cause unexpected issues
+
+# azure-identity==1.25.2
+# cryptography==43.0.3
+# databricks-sdk==0.32.3
+# requests==2.32.3
+# ndg-httpsclient==0.5.1
+# urllib3==2.2.3

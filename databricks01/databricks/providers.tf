@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.8.0"
+  required_version = ">= 1.14.7"
 
   backend "azurerm" {
     container_name   = "tfstate-databricks"
@@ -10,12 +10,12 @@ terraform {
   required_providers {
     databricks = {
       source  = "databricks/databricks"
-      version = "~> 1.47.0"
+      version = "~> 1.112.0"
     }
 
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 3.106.0"
+      version = "~> 4.65.0"
 
     }
   }
@@ -31,4 +31,5 @@ provider "azurerm" {
 provider "databricks" {
   host = data.azurerm_databricks_workspace.dbw.workspace_url
   azure_workspace_resource_id = data.azurerm_databricks_workspace.dbw.id
+  auth_type = "azure-cli"
 }

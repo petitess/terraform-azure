@@ -11,15 +11,6 @@ locals {
     dev = ["10.1.0.0/16"]
     stg = ["10.2.0.0/16"]
   }
-    sp = {
-    dev : "aebb162e-b624-4c10-8c89-f5e4a9a19517"
-    stg : ""
-  }
-  #Service connection for databricks using OIDC
-  sp_dbw = {
-    dev : "ec0de8b4-8e0c-450a-ac64-0a4163c59024"
-    stg : ""
-  }
 
   key_vault_name = "kv-sys-${local.prefix}-01"
   dbw_name       = "dbw-${local.prefix}-01"
